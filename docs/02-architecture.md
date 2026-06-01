@@ -10,11 +10,11 @@
 
 ## 資料流
 
-1. 使用者或 client 發出請求。
-2. FastAPI / stdio 入口接收資料。
-3. handler 解析訊息與設定。
-4. adapter / tool / search 層執行實際工作。
-5. 回傳最小可理解的結果。
+1. app/data_source.py 用時間函數模擬 AGV / machines / alerts 狀態（simulated_snapshot）。
+2. FastAPI 以 REST 提供 /api/snapshot，回傳目前這一刻的完整快照。
+3. /api/ai-summary 是 AI 摘要佔位 API，之後可換成真正的 LLM 呼叫。
+4. WebSocket /ws 每秒把同一份模擬狀態推送給前端。
+5. static/ 前端（index.html + app.js）連上 /ws，即時渲染 AGV、機台與告警。
 
 ## 設計原則
 
