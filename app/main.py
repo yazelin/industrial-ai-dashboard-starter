@@ -1,12 +1,14 @@
 import asyncio, json
+from pathlib import Path
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from .data_source import simulated_snapshot
+BASE=Path(__file__).resolve().parent.parent
 app=FastAPI(title="Industrial AI Dashboard Starter")
-app.mount("/static",StaticFiles(directory="static"),name="static")
+app.mount("/static",StaticFiles(directory=BASE/"static"),name="static")
 @app.get("/")
-def index(): return FileResponse("static/index.html")
+def index(): return FileResponse(BASE/"static"/"index.html")
 @app.get("/api/snapshot")
 def snapshot(): return simulated_snapshot()
 @app.get("/api/ai-summary")
