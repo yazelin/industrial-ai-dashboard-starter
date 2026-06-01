@@ -4,6 +4,15 @@
 
 Realtime industrial dashboard starter for AGV, PLC and machine monitoring demos.
 
+## 繁中定位
+
+**工業 AI Dashboard 入門模板** 面向台灣繁中受眾。
+
+- 主要受眾：適合自動化、AGV、PLC、工業 IoT 工程師，先做出可展示的 Web 監控介面。
+- 核心承諾：先用模擬 AGV / machine data 做出 dashboard，再替換成 MQTT、ROS2、Modbus 或 PLC API。
+- CTA 頁：https://yazelin.github.io/industrial-ai-dashboard-starter/
+
+
 ## Who this is for
 
 Automation engineers who want web dashboards before connecting real factory data.
