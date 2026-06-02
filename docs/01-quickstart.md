@@ -4,9 +4,10 @@
 
 ## 前置需求
 
-- Python 3.10 以上（本文以 Python 3.12 實測）
+- Python 3.10 以上（uv 會自動準備合適的 Python，本文以 Python 3.11 實測）
 - Git
 - 會用終端機
+- [uv](https://docs.astral.sh/uv/)（取代 venv / pip，安裝方式見下方步驟 1）
 - 不需要任何 API key、token 或 `.env`。這個 starter 全部用模擬資料，開箱即可跑。
 
 ## 它在做什麼（30 秒版）
@@ -15,47 +16,93 @@
 - `app/main.py` 用 FastAPI 把這份快照開成 REST API 與 WebSocket。
 - `static/` 是一個 zero-build 的前端，連上 `/ws` 每秒重畫畫面。
 
-## 步驟 1：取得程式碼並安裝
+## 步驟 1：安裝 uv（一次就好）
+
+本專案用 uv 管理環境，取代手動 `python -m venv` + `pip`。先裝 uv：
+
+Ubuntu / macOS：
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Windows（PowerShell）：
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+裝完重開終端機，`uv --version` 印得出版本就 OK。
+
+## 步驟 2：取得程式碼並裝依賴
 
 ```bash
 git clone https://github.com/yazelin/industrial-ai-dashboard-starter.git
 cd industrial-ai-dashboard-starter
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 ```
 
-`requirements.txt` 只有兩個套件，安裝很快：
+`uv sync` 會依 `pyproject.toml` + `uv.lock` 自動建立 `.venv` 並裝好套件（毋須手動 venv / activate）。**以下 `uv sync` / `uv run` 在 Ubuntu 與 Windows 完全相同。**
+
+依賴只有兩個（寫在 `pyproject.toml`）：
 
 ```
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 ```
 
-**成功的話你會看到：** `pip` 結束時印出 `Successfully installed ...`，而且終端機提示字元前面多了 `(.venv)`。
+**成功的話你會看到（這是實跑擷取的真實輸出）：**
 
-## 步驟 2：啟動服務
+```
+Using CPython 3.11.13
+Creating virtual environment at: .venv
+Resolved 21 packages in 959ms
+Prepared 18 packages in 712ms
+Installed 18 packages in 16ms
+ + annotated-types==0.7.0
+ + anyio==4.13.0
+ + click==8.4.1
+ + fastapi==0.115.6
+ + h11==0.16.0
+ + httptools==0.8.0
+ + idna==3.17
+ + pydantic==2.13.4
+ + pydantic-core==2.46.4
+ + python-dotenv==1.2.2
+ + pyyaml==6.0.3
+ + starlette==0.41.3
+ + typing-extensions==4.15.0
+ + typing-inspection==0.4.2
+ + uvicorn==0.34.0
+ + uvloop==0.22.1
+ + watchfiles==1.2.0
+ + websockets==16.0
+```
+
+之後要加新套件就用 `uv add <套件>`（會同時更新 `pyproject.toml` 與 `uv.lock`）。
+
+## 步驟 3：啟動服務
 
 **注意：一定要在 repo 根目錄（看得到 `app/` 資料夾的那層）執行**，否則會 `ModuleNotFoundError: No module named 'app'`（見 `05-common-pitfalls.md`）。
 
 ```bash
-uvicorn app.main:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
-**成功的話你會看到：**
+**成功的話你會看到（實跑擷取，這次用 8011 埠測試）：**
 
 ```
 INFO:     Will watch for changes in these directories: ['/.../industrial-ai-dashboard-starter']
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [787819] using WatchFiles
-INFO:     Started server process [787821]
+INFO:     Uvicorn running on http://127.0.0.1:8011 (Press CTRL+C to quit)
+INFO:     Started reloader process [1611328] using WatchFiles
+INFO:     Started server process [1611330]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 ```
 
 看到 `Application startup complete.` 就代表服務起來了。終端機會停在這裡持續執行，不會跳回提示字元，這是正常的。
 
-## 步驟 3：打開儀表板
+## 步驟 4：打開儀表板
 
 瀏覽器開 <http://127.0.0.1:8000/>。
 
@@ -67,11 +114,13 @@ INFO:     Application startup complete.
 
 數字每秒在動，就代表 WebSocket 串流通了。
 
-## 步驟 4：用 curl 驗證 API（不靠瀏覽器也能確認）
+## 步驟 5：用 curl 驗證 API（不靠瀏覽器也能確認）
 
 ```bash
 curl http://127.0.0.1:8000/api/snapshot
 ```
+
+> Windows PowerShell 的 `curl` 是 `Invoke-WebRequest` 的別名，建議改用 `curl.exe http://...` 或 `Invoke-RestMethod http://...`；Ubuntu / macOS 用一般 `curl` 即可。
 
 **真實輸出**（這是實跑擷取的，剛好兩台 AGV 電量低於 20，所以 `alerts` 真的有東西）：
 
@@ -110,13 +159,12 @@ curl http://127.0.0.1:8000/api/ai-summary
 
 這個 summary 目前是一句樣板字串（`app/main.py` 裡組出來的），之後要接真的 LLM 就改這裡。
 
-## 步驟 5（選做）：直接看 WebSocket 串流
+## 步驟 6（選做）：直接看 WebSocket 串流
 
-不想開瀏覽器也能確認 `/ws` 有在推。先裝 `websockets`（只是測試用，不是專案相依）：
+不想開瀏覽器也能確認 `/ws` 有在推。`websockets` 已隨 `uvicorn[standard]` 一起裝進環境，直接用 `uv run python` 就能跑：
 
 ```bash
-pip install websockets
-python - <<'PY'
+uv run python - <<'PY'
 import asyncio, json
 from websockets.asyncio.client import connect
 async def main():

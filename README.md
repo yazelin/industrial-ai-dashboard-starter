@@ -36,15 +36,35 @@ Automation engineers who want web dashboards before connecting real factory data
 
 ## Quick start
 
+本專案用 [uv](https://docs.astral.sh/uv/) 管理環境（取代 venv / pip）。`uv sync` 與 `uv run` 在 Ubuntu 與 Windows 完全相同，差別只在「安裝 uv」這一步。
+
+先安裝 uv（一次就好）：
+
+Ubuntu / macOS：
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Windows（PowerShell）：
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+裝完重開終端機，`uv --version` 印得出版本就 OK。
+
+接著取得專案、裝依賴、跑起來（兩平台相同）：
+
 ```bash
 git clone https://github.com/yazelin/industrial-ai-dashboard-starter.git
 cd industrial-ai-dashboard-starter
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+uv sync
+uv run uvicorn app.main:app --reload --port 8000
 # open http://127.0.0.1:8000/
 ```
+
+`uv sync` 會依 `pyproject.toml` + `uv.lock` 自動建立 `.venv` 並裝好套件（毋須手動 venv / activate）；`uv run` 直接在那個環境裡執行。加新套件用 `uv add <套件>`。沒裝 uv 的話 `pip install .` 也能裝，但本教學以 uv 為主。
 
 ## Learn / get help
 

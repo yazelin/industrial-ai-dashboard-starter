@@ -50,7 +50,7 @@ def simulated_snapshot():
 
 ```python
 import time
-import requests  # 記得 pip install requests 並加進 requirements.txt
+import requests  # 記得 uv add requests（會同時更新 pyproject.toml 與 uv.lock）
 
 FLEET_API = "http://10.0.0.5:9000/agvs"  # 換成你的現場端點
 
