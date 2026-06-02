@@ -28,27 +28,40 @@
 <p>每一步都有：要打的指令 → 真實輸出 → 「成功的話你會看到：…」。照到最後，你會有一個每秒更新的 AGV / 機台監控頁面在瀏覽器上跑。</p>
 <h3>前置需求</h3>
 <ul>
-<li>Python 3.10 以上（本文以 Python 3.12 實測）</li>
+<li>Python 3.10 以上（uv 會自動準備合適的 Python，本文以 Python 3.11 實測）</li>
 <li>Git、會用終端機</li>
+<li><a href="https://docs.astral.sh/uv/">uv</a>（取代 venv / pip，安裝方式見步驟 1）</li>
 <li>不需要任何 API key、token 或 <code>.env</code>。這個 starter 全部用模擬資料，開箱即可跑。</li>
 </ul>
-<h3>步驟 1：取得程式碼並安裝</h3>
+<h3>步驟 1：安裝 uv（一次就好）</h3>
+<p>本專案用 uv 管理環境，取代手動 <code>python -m venv</code> + <code>pip</code>。Ubuntu / macOS：</p>
+<pre><code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></pre>
+<p>Windows（PowerShell）：</p>
+<pre><code>powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"</code></pre>
+<p>裝完重開終端機，<code>uv --version</code> 印得出版本就 OK。</p>
+<h3>步驟 2：取得程式碼、裝依賴、跑起來</h3>
+<p>以下 <code>uv sync</code> / <code>uv run</code> 在 Ubuntu 與 Windows 完全相同。一定要在 repo 根目錄（看得到 <code>app/</code> 的那層）執行，否則啟動會 <code>ModuleNotFoundError: No module named 'app'</code>。</p>
 <pre><code>git clone https://github.com/yazelin/industrial-ai-dashboard-starter.git
 cd industrial-ai-dashboard-starter
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt</code></pre>
-<p>成功的話你會看到 <code>pip</code> 印出 <code>Successfully installed ...</code>，提示字元前面多了 <code>(.venv)</code>。</p>
-<h3>步驟 2：啟動服務</h3>
-<p>一定要在 repo 根目錄（看得到 <code>app/</code> 的那層）執行，否則會 <code>ModuleNotFoundError: No module named 'app'</code>。</p>
-<pre><code>uvicorn app.main:app --reload --port 8000</code></pre>
-<p>成功的話你會看到（真實輸出）：</p>
+uv sync
+uv run uvicorn app.main:app --reload --port 8000</code></pre>
+<p><code>uv sync</code> 會依 <code>pyproject.toml</code> + <code>uv.lock</code> 自動建立 <code>.venv</code> 並裝好套件（毋須手動 venv / activate），成功時印出（實跑擷取）：</p>
+<pre><code>Using CPython 3.11.13
+Creating virtual environment at: .venv
+Resolved 21 packages in 959ms
+Prepared 18 packages in 712ms
+Installed 18 packages in 16ms
+ + fastapi==0.115.6
+ + uvicorn==0.34.0
+ ... (共 18 個套件)</code></pre>
+<p>接著 <code>uv run uvicorn ...</code> 成功的話你會看到（實跑擷取，這次用 8011 埠測試）：</p>
 <pre><code>INFO:     Will watch for changes in these directories: ['/.../industrial-ai-dashboard-starter']
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [787819] using WatchFiles
-INFO:     Started server process [787821]
+INFO:     Uvicorn running on http://127.0.0.1:8011 (Press CTRL+C to quit)
+INFO:     Started reloader process [1611328] using WatchFiles
+INFO:     Started server process [1611330]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.</code></pre>
+<p>加新套件用 <code>uv add &lt;套件&gt;</code>（會同時更新 <code>pyproject.toml</code> 與 <code>uv.lock</code>）。</p>
 <p>看到 <code>Application startup complete.</code> 就代表服務起來了。終端機會停在這裡持續執行，這是正常的。</p>
 <h3>步驟 3：打開儀表板</h3>
 <p>瀏覽器開 http://127.0.0.1:8000/ 。你會看到深藍底的「Industrial AI Dashboard」單頁：最上方一排橘色邊框告警條、中段「AGVs」與「Machines」兩張卡片、最下方一塊每秒在跳的原始 JSON。數字每秒在動就代表 WebSocket 串流通了。</p>
@@ -116,7 +129,7 @@ INFO:     Application startup complete.</code></pre>
 <p>核心只有一個函式 <code>simulated_snapshot()</code>，它回傳一個 dict，前端只認得這個 dict 的「形狀」。你要做的事，就是把它換成讀真實資料，但保持回傳形狀不變。前端 <code>static/app.js</code> 只依賴：<code>d.agvs</code>（id/x/y/status/battery）、<code>d.machines</code>（id/status）、<code>d.alerts</code>（level/message）。</p>
 <h3>步驟 1：把模擬來源換成真實來源（before / after）</h3>
 <p>原則：只改 <code>app/data_source.py</code>，把外部資料 map 成同樣形狀。改之前是用三角函數產生假資料；改成從真實來源讀，例如：</p>
-<pre><code>import time, requests   # 記得 pip install requests 並加進 requirements.txt
+<pre><code>import time, requests   # 記得 uv add requests（會同時更新 pyproject.toml 與 uv.lock）
 FLEET_API = "http://10.0.0.5:9000/agvs"   # 換成你的現場端點
 
 def real_snapshot():
@@ -158,12 +171,12 @@ def real_snapshot():
 <ul>
 <li>本機流程已經跑通（<code>/api/snapshot</code> 有回 JSON、儀表板每秒更新）。</li>
 <li>README 的啟動指令與實際程式一致。</li>
-<li>確認 <code>requirements.txt</code> 已被部署平台安裝。</li>
+<li>確認部署平台用 <code>uv sync</code>（依 <code>pyproject.toml</code> + <code>uv.lock</code>）裝好依賴；正式環境可用 <code>uv sync --frozen --no-dev</code> 鎖定 lockfile。</li>
 <li>這個 starter 本身沒有 <code>.env</code>、沒有 secret、沒有 webhook，也沒有 <code>/health</code> endpoint，這幾項先不用煩惱。等你接了真實資料來源（可能帶 API key 或內網位址），再把這些秘密放進部署平台的 secrets，不要 commit 進 repo。</li>
 </ul>
 <h3>啟動指令</h3>
 <pre><code>
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 </code></pre>
 <h3>常見部署選項</h3>
@@ -185,7 +198,7 @@ curl http://127.0.0.1:8000/api/snapshot
 <h3>1. 在錯的目錄啟動：No module named 'app'</h3>
 <p><code>uvicorn app.main:app</code> 用 import path 找程式，當前目錄要看得到 <code>app/</code>。在別的目錄啟動會出現：</p>
 <pre><code>ModuleNotFoundError: No module named 'app'</code></pre>
-<p>修法：回到 repo 根目錄（<code>ls</code> 看得到 app/、static/、requirements.txt）再啟動。</p>
+<p>修法：回到 repo 根目錄（<code>ls</code> 看得到 app/、static/、pyproject.toml）再用 <code>uv run uvicorn app.main:app --reload --port 8000</code> 啟動。</p>
 <h3>2. 連接埠被占用：address already in use</h3>
 <p>8000 埠已被別的程式（包括你上一個沒關掉的 uvicorn）占用時：</p>
 <pre><code>ERROR:    [Errno 98] error while attempting to bind on address ('127.0.0.1', 8000): address already in use</code></pre>
@@ -198,6 +211,8 @@ curl http://127.0.0.1:8000/api/snapshot
 <p><code>/api/snapshot</code> 有時回 <code>"alerts": []</code> 不是 bug。告警是「AGV 電量低於 20」才產生，電量隨時間擺動，等幾秒或多刷新就會看到。</p>
 <h3>5. 終端機卡住不動，其實正常</h3>
 <p>啟動後游標停在 <code>Application startup complete.</code> 是對的，uvicorn 是常駐服務。另開一個終端機去 curl，要停就在這個視窗按 Ctrl+C。</p>
+<h3>6. uv 沒裝 / 忘了 uv sync</h3>
+<p><code>uv: command not found</code>（Windows 為 <code>'uv' is not recognized</code>）代表還沒裝 uv 或裝完沒重開終端機——照步驟 1 裝好、重開新終端機，<code>uv --version</code> 有版本再繼續。若沒先 <code>uv sync</code>（或 <code>git pull</code> 進新依賴沒重新 sync）就繞過 uv 啟動，會看到 <code>ModuleNotFoundError: No module named 'fastapi'</code>——先 <code>uv sync</code> 再 <code>uv run uvicorn ...</code> 即可。</p>
 <h3>問別人前準備</h3>
 <ul>
 <li>repo / branch、Python 版本、你在哪個目錄、用什麼指令啟動</li>

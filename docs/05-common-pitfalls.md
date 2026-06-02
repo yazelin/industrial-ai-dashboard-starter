@@ -10,11 +10,11 @@
 ModuleNotFoundError: No module named 'app'
 ```
 
-完整 traceback 結尾就是這行。**修法：** 回到 repo 根目錄（`ls` 看得到 `app/`、`static/`、`requirements.txt`）再啟動：
+完整 traceback 結尾就是這行。**修法：** 回到 repo 根目錄（`ls` 看得到 `app/`、`static/`、`pyproject.toml`）再啟動：
 
 ```bash
 cd /path/to/industrial-ai-dashboard-starter
-uvicorn app.main:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
 ## 2. 連接埠被占用：`address already in use`
@@ -27,8 +27,8 @@ ERROR:    [Errno 98] error while attempting to bind on address ('127.0.0.1', 800
 
 **修法二選一：**
 
-- 換一個埠：`uvicorn app.main:app --reload --port 8001`，網址也跟著改成 `:8001`。
-- 或找出占用的程式關掉：`lsof -i :8000`（macOS / Linux）看到 PID 後 `kill <PID>`。
+- 換一個埠：`uv run uvicorn app.main:app --reload --port 8001`，網址也跟著改成 `:8001`。
+- 或找出占用的程式關掉：Ubuntu / macOS 用 `lsof -i :8000` 看到 PID 後 `kill <PID>`；Windows PowerShell 用 `Get-NetTCPConnection -LocalPort 8000` 看 PID 後 `Stop-Process -Id <PID>`。
 
 ## 3. WebSocket 連不上：前端不更新、路徑打錯
 
@@ -48,6 +48,26 @@ InvalidStatus: server rejected WebSocket connection: HTTP 403
 
 啟動後看到 `Application startup complete.` 然後游標停在那裡、不回到提示字元——這是對的。uvicorn 是常駐服務，要一直跑著。**不要** 在這個視窗繼續打指令；另開一個終端機分頁去 `curl` 或做別的事。要停服務就在這個視窗按 `Ctrl+C`。
 
+## 6. `uv: command not found`／`uv` 不是內部或外部命令
+
+還沒裝 uv，或裝完沒重開終端機（uv 安裝後才把自己加進 PATH）：
+
+```
+uv: command not found
+```
+
+Windows PowerShell 則是 `The term 'uv' is not recognized ...`。**修法：** 照 `01-quickstart.md` 步驟 1 裝 uv（Ubuntu / macOS 用 `curl -LsSf https://astral.sh/uv/install.sh | sh`；Windows 用 `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`），裝完**重開一個新的終端機**，`uv --version` 印得出版本再繼續。
+
+## 7. 忘了 `uv sync` 就直接 `uv run`／改了 `pyproject.toml` 沒重新 sync
+
+在還沒 `uv sync`（環境還沒建好）、或剛 `git pull` 進新依賴卻沒重新 sync 的情況下啟動，會看到找不到套件：
+
+```
+ModuleNotFoundError: No module named 'fastapi'
+```
+
+**修法：** 先在 repo 根目錄跑一次 `uv sync`（會依 `pyproject.toml` + `uv.lock` 把 `.venv` 補齊），再 `uv run uvicorn app.main:app --reload --port 8000`。其實 `uv run` 通常會自動先同步一次，但若你是用其他方式（例如自己 `python -m uvicorn`）繞過 uv，就會踩到這條——本教學一律用 `uv run`。
+
 ## Debug 順序（針對這個 repo）
 
 1. 終端機有沒有停在 `Application startup complete.`？沒有就看 traceback 第一行（多半是第 1 或第 2 條）。
@@ -58,7 +78,7 @@ InvalidStatus: server rejected WebSocket connection: HTTP 403
 
 ## 問別人前準備
 
-- repo / branch、你的 Python 版本（`python --version`）
+- repo / branch、你的 uv 版本（`uv --version`）與 Python 版本（`uv run python --version`）
 - 你在哪個目錄、用什麼指令啟動
 - 完整的錯誤訊息（整段 traceback，不是只貼最後一行）
 - 你預期看到什麼、實際看到什麼
