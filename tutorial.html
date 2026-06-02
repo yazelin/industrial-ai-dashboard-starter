@@ -25,55 +25,68 @@
 <li>付費工作坊：手把手解問題、看你的程式與設定、一起改成你的使用場景。</li>
 <li>企業顧問：需求訪談、PoC、部署、權限、安全與維運規劃。</li>
 </ul></section><section><h2>工業 AI Dashboard 入門模板：快速開始</h2>
+<p>每一步都有：要打的指令 → 真實輸出 → 「成功的話你會看到：…」。照到最後，你會有一個每秒更新的 AGV / 機台監控頁面在瀏覽器上跑。</p>
 <h3>前置需求</h3>
 <ul>
-<li>Python 3.10+</li>
-<li>Git</li>
-<li>可以使用終端機</li>
-<li>如果要接真實 AI 或平台 token，請準備對應帳號與 API key。</li>
+<li>Python 3.10 以上（本文以 Python 3.12 實測）</li>
+<li>Git、會用終端機</li>
+<li>不需要任何 API key、token 或 <code>.env</code>。這個 starter 全部用模擬資料，開箱即可跑。</li>
 </ul>
-<h3>最短路徑</h3>
-<ol>
-<li>啟動 FastAPI</li>
-<li>打開 dashboard UI</li>
-<li>觀察 WebSocket 即時資料</li>
-<li>把 simulated_snapshot 替換成真實資料來源</li>
-</ol>
-<h3>安裝與啟動</h3>
-<pre><code>
-git clone https://github.com/yazelin/industrial-ai-dashboard-starter.git
-
+<h3>步驟 1：取得程式碼並安裝</h3>
+<pre><code>git clone https://github.com/yazelin/industrial-ai-dashboard-starter.git
 cd industrial-ai-dashboard-starter
-
 python -m venv .venv
-
 source .venv/bin/activate
-
-pip install -r requirements.txt
-
-uvicorn app.main:app --reload --port 8000
-
-# open http://127.0.0.1:8000/
-
-</code></pre>
-<h3>健康檢查</h3>
-<pre><code>
-curl http://127.0.0.1:8000/api/snapshot
-
-</code></pre>
+pip install -r requirements.txt</code></pre>
+<p>成功的話你會看到 <code>pip</code> 印出 <code>Successfully installed ...</code>，提示字元前面多了 <code>(.venv)</code>。</p>
+<h3>步驟 2：啟動服務</h3>
+<p>一定要在 repo 根目錄（看得到 <code>app/</code> 的那層）執行，否則會 <code>ModuleNotFoundError: No module named 'app'</code>。</p>
+<pre><code>uvicorn app.main:app --reload --port 8000</code></pre>
+<p>成功的話你會看到（真實輸出）：</p>
+<pre><code>INFO:     Will watch for changes in these directories: ['/.../industrial-ai-dashboard-starter']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [787819] using WatchFiles
+INFO:     Started server process [787821]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.</code></pre>
+<p>看到 <code>Application startup complete.</code> 就代表服務起來了。終端機會停在這裡持續執行，這是正常的。</p>
+<h3>步驟 3：打開儀表板</h3>
+<p>瀏覽器開 http://127.0.0.1:8000/ 。你會看到深藍底的「Industrial AI Dashboard」單頁：最上方一排橘色邊框告警條、中段「AGVs」與「Machines」兩張卡片、最下方一塊每秒在跳的原始 JSON。數字每秒在動就代表 WebSocket 串流通了。</p>
+<h3>步驟 4：用 curl 驗證 API</h3>
+<pre><code>curl http://127.0.0.1:8000/api/snapshot</code></pre>
+<p>真實輸出（剛好兩台 AGV 電量低於 20，所以 alerts 真的有東西）：</p>
+<pre><code>{
+  "timestamp": 1780342125.2277737,
+  "agvs": [
+    {"id": "AGV-1", "x": 47.0, "y": 17.2, "battery": 46.5, "status": "loading"},
+    {"id": "AGV-2", "x": 19.0, "y": 21.9, "battery": 11.2, "status": "charging"},
+    {"id": "AGV-3", "x": 19.5, "y": 52.4, "battery": 9.3, "status": "charging"}
+  ],
+  "machines": [
+    {"id": "AOI-1", "status": "warn", "ng_rate": 0.52},
+    {"id": "PLC-Press-2", "status": "stop", "temperature": 49.2}
+  ],
+  "alerts": [
+    {"level": "warning", "message": "AGV-2 low battery"},
+    {"level": "warning", "message": "AGV-3 low battery"}
+  ]
+}</code></pre>
+<p>電量是隨時間擺動的，所以你跑的時候 alerts 可能是空陣列，多刷新幾次就會看到 low battery 告警冒出來。再試 AI summary 佔位 API：</p>
+<pre><code>curl http://127.0.0.1:8000/api/ai-summary
+{"summary":"3 AGVs online, 2 alerts."}</code></pre>
+<h3>整體 OK 的判斷標準</h3>
+<ul>
+<li>終端機停在 <code>Application startup complete.</code>，沒有 traceback。</li>
+<li>http://127.0.0.1:8000/ 打得開，最下方 JSON 每秒在跳。</li>
+<li><code>/api/snapshot</code> 回傳含 agvs / machines / alerts 的 JSON。</li>
+<li><code>/api/ai-summary</code> 回傳一句 summary。</li>
+</ul>
 <h3>常用入口</h3>
 <ul>
 <li>GET /：dashboard UI</li>
 <li>GET /api/snapshot：目前 AGV / machines / alerts 快照</li>
-<li>GET /api/ai-summary：簡單 AI summary 佔位 API</li>
-<li>WebSocket /ws：每秒推送即時資料</li>
-</ul>
-<h3>第一次成功的標準</h3>
-<ul>
-<li>服務能啟動</li>
-<li>基本 endpoint 有回應</li>
-<li>範例流程能跑通</li>
-<li>秘密 token 沒有 commit 到 GitHub</li>
+<li>GET /api/ai-summary：AI summary 佔位 API</li>
+<li>WebSocket /ws：每秒推送即時快照</li>
 </ul></section><section><h2>工業 AI Dashboard 入門模板：架構說明</h2>
 <h3>核心檔案</h3>
 <ul>
@@ -94,37 +107,59 @@ curl http://127.0.0.1:8000/api/snapshot
 <h3>設計原則</h3>
 <ul>
 <li>先讓流程可跑，再做漂亮抽象。</li>
-<li>token 與 secrets 全部放在環境變數。</li>
-<li>每一層保持可以替換：入口、AI provider、資料來源、部署方式。</li>
+<li>這個 starter 沒有任何 secret；等你接真實資料來源或 LLM 時，token 才放進環境變數，不要寫死在程式裡。</li>
+<li>每一層保持可以替換：資料來源、AI provider、部署方式。</li>
 <li>範例程式刻意保持小，方便你看懂後改成自己的版本。</li>
 </ul></section><section><h2>工業 AI Dashboard 入門模板：完整操作流程</h2>
-<h3>步驟</h3>
-<ol>
-<li>先啟動 uvicorn，打開 http://127.0.0.1:8000。</li>
-<li>確認 AGV、machines、alerts 每秒更新。</li>
-<li>查看 /api/snapshot 的 JSON 形狀。</li>
-<li>把 app/data_source.py 的 simulated_snapshot 改成讀 MQTT、ROS2、Modbus 或 PLC API。</li>
-<li>保留 JSON 欄位形狀，讓前端不用大改。</li>
-<li>再加入歷史資料、告警規則與 AI summary。</li>
-</ol>
-<h3>建議紀錄</h3>
+<p>quickstart 讓你把東西跑起來；這一節帶你真的改一次資料來源，並在章末做一個我已實跑驗證的小練習。</p>
+<h3>全貌：資料怎麼從 Python 流到瀏覽器</h3>
+<p>核心只有一個函式 <code>simulated_snapshot()</code>，它回傳一個 dict，前端只認得這個 dict 的「形狀」。你要做的事，就是把它換成讀真實資料，但保持回傳形狀不變。前端 <code>static/app.js</code> 只依賴：<code>d.agvs</code>（id/x/y/status/battery）、<code>d.machines</code>（id/status）、<code>d.alerts</code>（level/message）。</p>
+<h3>步驟 1：把模擬來源換成真實來源（before / after）</h3>
+<p>原則：只改 <code>app/data_source.py</code>，把外部資料 map 成同樣形狀。改之前是用三角函數產生假資料；改成從真實來源讀，例如：</p>
+<pre><code>import time, requests   # 記得 pip install requests 並加進 requirements.txt
+FLEET_API = "http://10.0.0.5:9000/agvs"   # 換成你的現場端點
+
+def real_snapshot():
+    raw = requests.get(FLEET_API, timeout=2).json()
+    agvs = [{
+        "id": r["agv_name"], "x": r["pos_x"], "y": r["pos_y"],
+        "battery": r["soc"], "status": r["mode"],
+    } for r in raw["units"]]
+    machines = []
+    alerts = [{"level": "warning", "message": a["id"]+" low battery"}
+              for a in agvs if a["battery"] < 20]
+    return {"timestamp": time.time(), "agvs": agvs, "machines": machines, "alerts": alerts}</code></pre>
+<p>改完跑出來，<code>/api/snapshot</code> 的 JSON 形狀完全一樣，只是數字變成現場真實值，前端不用改任何程式。</p>
+<p>提醒：<code>requests.get</code> 是阻塞呼叫，放在 <code>/ws</code> 迴圈會卡住 event loop；正式接線請用背景任務定時更新一份 cache，handler 只讀 cache。</p>
+<h3>步驟 2：加入歷史與 AI summary（方向）</h3>
 <ul>
-<li>你使用的 Python 版本</li>
-<li>啟動指令</li>
-<li>`.env` 裡有哪些 key 已設定；不要貼出 secret 值</li>
-<li>webhook / endpoint URL</li>
-<li>錯誤訊息完整內容</li>
-<li>你預期發生什麼、實際發生什麼</li>
+<li>歷史：背景任務把每次 snapshot 存進 ring buffer 或時序資料庫，再多開 <code>GET /api/history</code>。</li>
+<li>AI summary：目前 <code>/api/ai-summary</code> 回傳樣板字串；要接真 LLM 就改 <code>app/main.py</code> 的 <code>summary()</code>。需要你自己的 LLM key，本文不實跑這段；設好金鑰後你會看到 summary 從固定樣板變成模型寫的句子。</li>
 </ul>
-<h3>下一個里程碑</h3>
-<p>完成最小流程後，不要急著加功能。先找一個真實情境，讓這個 starter 解決一個很小但明確的問題。</p></section><section><h2>工業 AI Dashboard 入門模板：部署筆記</h2>
+<h3>動手練習：新增一台機台 + 一條告警規則（已實跑驗證）</h3>
+<p>目標：在 <code>machines</code> 多一台 <code>CNC-3</code>，並加「溫度 &gt; 80 發 critical 告警」的規則。在 <code>app/data_source.py</code> 的 machines 末端加上：</p>
+<pre><code>{"id": "CNC-3", "status": random.choice(["run","run","stop"]), "temperature": round(60+random.random()*30, 1)},</code></pre>
+<p>並在 alerts 後面加一行：</p>
+<pre><code>alerts += [{"level": "critical", "message": m["id"]+" overheat"} for m in machines if m.get("temperature", 0) > 80]</code></pre>
+<p>存檔（<code>--reload</code> 自動重載），刷新 <code>/api/snapshot</code>。這是我實跑擷取的真實輸出（剛好遇到 CNC-3 89.4 度，觸發 critical 告警）：</p>
+<pre><code>"machines": [
+  {"id": "AOI-1", "status": "run", "ng_rate": 1.54},
+  {"id": "PLC-Press-2", "status": "stop", "temperature": 54.1},
+  {"id": "CNC-3", "status": "run", "temperature": 89.4}
+],
+"alerts": [
+  {"level": "warning", "message": "AGV-3 low battery"},
+  {"level": "critical", "message": "CNC-3 overheat"}
+]</code></pre>
+<p>瀏覽器的「Machines」卡片會多一列 CNC-3；溫度衝破 80 時，告警條會多一條 critical: CNC-3 overheat。溫度是隨機的，多刷幾次就會看到它出現又消失。這個練習完整體現了 starter 的擴充方式：改 <code>data_source.py</code> 的回傳內容，前端自動跟著變。</p>
+<h3>完整流程後的下一步</h3>
+<p>把最小流程跑通、練習做完之後，先別急著堆功能。挑一個你手上真實但很小的情境，讓這個 starter 先把那一個問題解乾淨，再往外長。</p></section><section><h2>工業 AI Dashboard 入門模板：部署筆記</h2>
 <h3>部署前檢查</h3>
 <ul>
-<li>本機流程已經跑通。</li>
-<li>`.env` 沒有被 commit。</li>
+<li>本機流程已經跑通（<code>/api/snapshot</code> 有回 JSON、儀表板每秒更新）。</li>
 <li>README 的啟動指令與實際程式一致。</li>
-<li>`/health` 或等價檢查 endpoint 可用。</li>
-<li>外部服務 token 已放在部署平台 secrets。</li>
+<li>確認 <code>requirements.txt</code> 已被部署平台安裝。</li>
+<li>這個 starter 本身沒有 <code>.env</code>、沒有 secret、沒有 webhook，也沒有 <code>/health</code> endpoint，這幾項先不用煩惱。等你接了真實資料來源（可能帶 API key 或內網位址），再把這些秘密放進部署平台的 secrets，不要 commit 進 repo。</li>
 </ul>
 <h3>啟動指令</h3>
 <pre><code>
@@ -146,30 +181,28 @@ curl http://127.0.0.1:8000/api/snapshot
 <p>接著再測真正的業務流程，不要只看服務有沒有啟動。</p>
 <h3>實務提醒</h3>
 <p>部署不是最後一步。正式使用前至少要補：log、錯誤告警、權限控管、備份策略、secret rotation，以及基本監控。</p></section><section><h2>工業 AI Dashboard 入門模板：常見問題與踩雷清單</h2>
-<h3>常見坑</h3>
-<ul>
-<li>工業現場資料通常不乾淨，先定義穩定 JSON schema 比先做漂亮 UI 更重要。</li>
-<li>WebSocket 斷線重連、權限、網路隔離是正式環境必補項。</li>
-<li>Modbus / PLC / ROS2 連線要避免阻塞 event loop，可用背景任務或獨立 adapter。</li>
-<li>Dashboard demo 不等於上線監控，正式版要有 logging、告警與資料保存。</li>
-<li>現場網路可能不能直接對外，部署要考慮內網、VPN 或 edge gateway。</li>
-</ul>
-<h3>Debug 順序</h3>
-<ol>
-<li>先確認服務有沒有啟動。</li>
-<li>再確認 endpoint / webhook URL 是否正確。</li>
-<li>檢查環境變數是否有載入。</li>
-<li>用 echo / fake provider 排除 AI 服務問題。</li>
-<li>查看完整錯誤訊息，不要只看最後一行。</li>
-<li>把問題縮到最小可重現案例。</li>
-</ol>
+<p>以下錯誤訊息都是實際跑這個 starter 時會遇到、且實測重現過的。</p>
+<h3>1. 在錯的目錄啟動：No module named 'app'</h3>
+<p><code>uvicorn app.main:app</code> 用 import path 找程式，當前目錄要看得到 <code>app/</code>。在別的目錄啟動會出現：</p>
+<pre><code>ModuleNotFoundError: No module named 'app'</code></pre>
+<p>修法：回到 repo 根目錄（<code>ls</code> 看得到 app/、static/、requirements.txt）再啟動。</p>
+<h3>2. 連接埠被占用：address already in use</h3>
+<p>8000 埠已被別的程式（包括你上一個沒關掉的 uvicorn）占用時：</p>
+<pre><code>ERROR:    [Errno 98] error while attempting to bind on address ('127.0.0.1', 8000): address already in use</code></pre>
+<p>修法：換埠 <code>--port 8001</code>（網址也跟著改），或 <code>lsof -i :8000</code> 找到 PID 後 <code>kill</code>。</p>
+<h3>3. WebSocket 連不上：路徑打錯</h3>
+<p>前端連的是 <code>/ws</code>。若改前端時把路徑打成 <code>/websocket</code> 之類，畫面會停在空白不再更新；連錯路徑伺服器端會回：</p>
+<pre><code>server rejected WebSocket connection: HTTP 403</code></pre>
+<p>修法：確認 WebSocket URL 路徑是 <code>/ws</code>，協定 http 用 ws、https 用 wss（app.js 已自動判斷）。改完在瀏覽器硬重新整理。</p>
+<h3>4. 看到空的 alerts，以為壞了</h3>
+<p><code>/api/snapshot</code> 有時回 <code>"alerts": []</code> 不是 bug。告警是「AGV 電量低於 20」才產生，電量隨時間擺動，等幾秒或多刷新就會看到。</p>
+<h3>5. 終端機卡住不動，其實正常</h3>
+<p>啟動後游標停在 <code>Application startup complete.</code> 是對的，uvicorn 是常駐服務。另開一個終端機去 curl，要停就在這個視窗按 Ctrl+C。</p>
 <h3>問別人前準備</h3>
 <ul>
-<li>repo / branch</li>
-<li>啟動指令</li>
-<li>完整錯誤訊息</li>
-<li>你已經檢查過哪些設定</li>
-<li>secret 請遮掉，不要直接貼 token</li>
+<li>repo / branch、Python 版本、你在哪個目錄、用什麼指令啟動</li>
+<li>完整錯誤訊息（整段 traceback，不是只貼最後一行）</li>
+<li>你預期看到什麼、實際看到什麼</li>
 </ul></section><section><h2>工業 AI Dashboard 入門模板：改成你的使用場景</h2>
 <h3>可延伸方向</h3>
 <ul>
@@ -216,4 +249,18 @@ curl http://127.0.0.1:8000/api/snapshot
 <li>GitHub repo：https://github.com/yazelin/industrial-ai-dashboard-starter</li>
 <li>Email：yaze.lin.j303@gmail.com</li>
 </ul>
-<p>建議你先照公開教學跑一次，然後帶著具體錯誤訊息或想改造的場景來討論，效率最高。</p></section></main><section id="contact"><h2>需要手把手協助？</h2><p>公開文件適合照著跑；工作坊與顧問適合處理你的真實環境、debug、部署、權限與客製化改造。</p><p><a class="btn primary" href="https://yazelin.github.io/industrial-ai-dashboard-starter/#waitlist">留下 email / 收到開課通知</a></p></section><p class="footer">© Yaze Lin. 教學內容公開於 GitHub，歡迎 fork、star、照著做。</p></div></body></html>
+<p>建議你先照公開教學跑一次，然後帶著具體錯誤訊息或想改造的場景來討論，效率最高。</p></section><section><h2>關於作者</h2>
+<p>這個範本由 <strong>林亞澤（Yaze Lin）</strong> 維護 — 出身機電自動化系統整合，現在把同一套工程方法用在 AI 產品上。</p>
+<ul>
+<li>任職於 <strong>擎添工業 ChingTech</strong>（1984 年成立的機電自動化公司：PLC 程式、機械手臂、AGV 無人搬運、半導體封測／PCB／面板／光學產線整合）。</li>
+<li>技術筆記與更多範例：<a href="https://yazelin.github.io">yazelin.github.io</a> · GitHub <a href="https://github.com/yazelin">@yazelin</a></li>
+</ul>
+<h3>從範本到正式產品</h3>
+<p>你正在看的即時工業儀表板範本，是 CTOS 工業監控模組的最小骨架。如果你想看同樣的想法做成正式、上線中的產品：</p>
+<ul>
+<li><strong>CTOS</strong> — 企業 AI 工作平台：macOS 風格 Web 桌面、知識庫 RAG 檢索、產業專屬 Agent、LINE Bot 整合，資料留在台灣。<a href="https://ching-tech.com">ching-tech.com</a> · <a href="https://ching-tech.github.io">品牌站</a></li>
+<li><strong>CTOS-Lite / CT JINN</strong> — 把公司裝進 LINE 的個人版 AI 助理，加 LINE 即可試用：<a href="https://line.me/R/ti/p/@285fjkky">@285fjkky</a></li>
+<li><strong>Mori Desktop</strong> — 個人 AI 管家桌面應用（Tauri 2 + Rust + React）：<a href="https://github.com/yazelin/mori-desktop">github.com/yazelin/mori-desktop</a></li>
+<li><strong>AgentOS</strong> — 跨 CLI 的 agent 治理平台（開發中）</li>
+</ul>
+<p>想把這個範本落地成你公司的內部系統，或想上一堂從 0 到部署的課？來信 yaze.lin.j303@gmail.com，或追蹤上面的連結。</p></section></main><section id="contact"><h2>需要手把手協助？</h2><p>公開文件適合照著跑；工作坊與顧問適合處理你的真實環境、debug、部署、權限與客製化改造。</p><p><a class="btn primary" href="https://yazelin.github.io/industrial-ai-dashboard-starter/#waitlist">留下 email / 收到開課通知</a></p></section><p class="footer">© Yaze Lin. 教學內容公開於 GitHub，歡迎 fork、star、照著做。</p></div></body></html>
