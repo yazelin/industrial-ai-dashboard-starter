@@ -77,8 +77,6 @@ SOURCE_BACKEND=mqtt AI_SUMMARY=llm uv run uvicorn app.main:app          # 兩軸
 
 詳細說明見 `docs/08-real-data-and-ai-summary.md`。
 
-- 後半段(真資料 + AI 班報):docs/08-real-data-and-ai-summary.md
-
 ## Learn / get help
 
 This repo is also a CTA page for workshops and consulting:

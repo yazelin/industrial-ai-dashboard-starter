@@ -1,4 +1,5 @@
 import asyncio, json
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import FileResponse
@@ -7,7 +8,22 @@ from .data_source import simulated_snapshot
 from .summary import rule_summary
 from . import config
 BASE = Path(__file__).resolve().parent.parent
-app = FastAPI(title="Industrial AI Dashboard Starter")
+
+
+@asynccontextmanager
+async def lifespan(app):
+    # Start the MQTT subscriber as a background task only in mqtt mode (lazy
+    # import keeps the base install free of amqtt). Cancelled on shutdown.
+    task = None
+    if config.source_backend() == "mqtt":
+        from .ingest_mqtt import start_subscriber
+        task = asyncio.create_task(start_subscriber())
+    yield
+    if task is not None:
+        task.cancel()
+
+
+app = FastAPI(title="Industrial AI Dashboard Starter", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 
 
@@ -40,13 +56,6 @@ async def ai_summary():
         from .summary import llm_summary  # lazy: needs the ai extra (httpx)
         return {"summary": await llm_summary(snap)}
     return {"summary": rule_summary(snap)}
-
-
-@app.on_event("startup")
-async def _startup():
-    if config.source_backend() == "mqtt":
-        from .ingest_mqtt import start_subscriber  # lazy
-        asyncio.create_task(start_subscriber())
 
 
 @app.websocket("/ws")
