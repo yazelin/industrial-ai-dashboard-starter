@@ -1,326 +1,204 @@
-<!doctype html><html lang="zh-Hant-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>工業 AI Dashboard 入門模板｜完整教學</title><meta name="description" content="工業 AI Dashboard 入門模板 的公開教學文件：快速開始、架構、部署、踩雷與改造方向。"><style>:root{--bg:#0b111b;--accent:#fb923c;--text:#f8fafc;--muted:#94a3b8;--panel:rgba(255,255,255,.06);--border:rgba(255,255,255,.12)}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 80% 0%, color-mix(in srgb,var(--accent) 24%,transparent), transparent 36%),linear-gradient(180deg,var(--bg),#05070b);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC','Segoe UI',sans-serif;line-height:1.75}a{color:inherit}.wrap{max-width:1120px;margin:0 auto;padding:32px 20px 80px}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:54px}.brand{font-weight:900;text-decoration:none}.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);padding:10px 14px;border-radius:999px;text-decoration:none;background:rgba(255,255,255,.04)}.primary{background:var(--accent);color:#020617;border-color:transparent;font-weight:800}.hero{padding:48px;border:1px solid var(--border);border-radius:28px;background:var(--panel);box-shadow:0 24px 80px rgba(0,0,0,.32)}h1{font-size:clamp(34px,6vw,72px);line-height:1.05;margin:0 0 20px}.lead{font-size:22px;color:#dbeafe;max-width:820px}.muted{color:var(--muted)}.toc{display:flex;flex-wrap:wrap;gap:10px;margin:28px 0}.toc a{font-size:14px;text-decoration:none;border:1px solid var(--border);border-radius:999px;padding:8px 12px;color:#dbeafe;background:rgba(255,255,255,.04)}main{display:grid;gap:22px;margin-top:28px}section{border:1px solid var(--border);border-radius:24px;background:rgba(255,255,255,.045);padding:28px;min-width:0}h2{font-size:30px;line-height:1.25;margin:0 0 16px}h3{font-size:21px;margin-top:24px;color:#e2e8f0}p,li{color:#cbd5e1}pre{background:#020617;border:1px solid rgba(148,163,184,.25);border-radius:16px;padding:18px;overflow:auto;max-width:100%}code{font-family:'JetBrains Mono','SFMono-Regular',Consolas,monospace;color:#bfdbfe}ul,ol{padding-left:24px}.footer{margin-top:40px;color:var(--muted);font-size:14px}@media(max-width:720px){.top{align-items:flex-start;flex-direction:column}.hero{padding:28px}}</style><style>/* CTA polish: solid deep button + white bold text */.primary,.btn.primary{background:#ea580c!important;background-image:none!important;color:#fff!important;border-color:transparent!important}.form button,.card.form button,.ml-embedded button[type=submit],.ml-embedded .ml-form-embedSubmit button{background:#ea580c!important;background-image:none!important;color:#fff!important}/* unified content links = page accent */a:not([class]){color:var(--accent)!important}a:not([class]):hover{filter:brightness(1.25)}</style></head><body><div class="wrap"><nav class="top"><a class="brand" href="index.html">← Industrial Dashboard</a><div><a class="btn" href="https://github.com/yazelin/industrial-ai-dashboard-starter">GitHub</a> <a class="btn primary" href="#contact">工作坊 / 顧問</a></div></nav><header class="hero"><p class="muted">公開教學文件</p><h1>工業 AI Dashboard 入門模板</h1><p class="lead">先用模擬 AGV / machine data 做出 dashboard，再替換成 MQTT、ROS2、Modbus 或 PLC API。</p><p class="muted">Markdown 原始檔也放在 <code>docs/</code>，這個頁面方便用瀏覽器直接閱讀。</p><div class="toc"><a href='docs/00-overview.md'>00-overview</a><a href='docs/01-quickstart.md'>01-quickstart</a><a href='docs/02-architecture.md'>02-architecture</a><a href='docs/03-step-by-step.md'>03-step-by-step</a><a href='docs/04-deployment.md'>04-deployment</a><a href='docs/05-common-pitfalls.md'>05-common-pitfalls</a><a href='docs/06-customize-for-your-use-case.md'>06-customize-for-your-use-case</a><a href='docs/07-workshop-and-consulting.md'>07-workshop-and-consulting</a><a href='docs/08-real-data-and-ai-summary.md'>08-real-data-and-ai-summary</a></div></header><main><section><h2>工業 AI Dashboard 入門模板：總覽</h2>
-<p>先用模擬 AGV / machine data 做出 dashboard，再替換成 MQTT、ROS2、Modbus 或 PLC API。</p>
-<h3>兩軌:先玩具、再真實</h3>
-<p>這份教材分兩段:</p>
-<ul>
-<li><strong>前半段(<code>01</code>、<code>03</code>)</strong> — 用模擬資料 + 樣板摘要做出會動的 dashboard,看懂資料契約、REST、WebSocket、前端吃 JSON。</li>
-<li><strong>後半段(<code>08</code>)</strong> — 沿兩個獨立軸把它變成真的:資料源 <code>sim → MQTT</code>、AI 摘要 <code>規則式 → LLM 班報</code>,而前端與 API 一行都不用改。</li>
-</ul>
-<p>先用玩具看懂整條路,再逐軸接上真實資料與 AI —— 你會清楚知道哪些是可抽換的、哪些是你自己的責任。</p>
-<h3>適合誰</h3>
-<p>自動化、AGV、PLC、工業 IoT 工程師，想先做出可展示的 Web 監控介面。</p>
-<h3>你會做出什麼</h3>
-<ul>
-<li>AGV 狀態監控 demo</li>
-<li>機台狀態 dashboard</li>
-<li>工廠資料 WebSocket 推播骨架</li>
-<li>PoC 展示與客戶需求訪談</li>
-</ul>
-<h3>建議學習方式</h3>
-<ol>
-<li>先照 `01-quickstart.md` 跑起來。</li>
-<li>再看 `02-architecture.md` 理解每個檔案負責什麼。</li>
-<li>照 `03-step-by-step.md` 做一次完整流程。</li>
-<li>準備部署時看 `04-deployment.md`。</li>
-<li>卡住時先查 `05-common-pitfalls.md`。</li>
-<li>想改成自己的場景，看 `06-customize-for-your-use-case.md`。</li>
-<li>接真實 MQTT 資料 + LLM 班報的對照組，看 <a href='docs/08-real-data-and-ai-summary.md'>08-real-data-and-ai-summary.md</a>。</li>
-</ol>
-<h3>免費與付費怎麼分</h3>
-<p>這個 repo 會公開最小可跑版本與完整操作步驟。真正適合工作坊或顧問的部分，是陪你 debug、改成你的情境、處理部署與實務安全邊界。</p>
-<ul>
-<li>免費：可重現的 starter、教學文件、基本部署方向。</li>
-<li>付費工作坊：手把手解問題、看你的程式與設定、一起改成你的使用場景。</li>
-<li>企業顧問：需求訪談、PoC、部署、權限、安全與維運規劃。</li>
-</ul></section><section><h2>工業 AI Dashboard 入門模板：快速開始</h2>
-<p>每一步都有：要打的指令 → 真實輸出 → 「成功的話你會看到：…」。照到最後，你會有一個每秒更新的 AGV / 機台監控頁面在瀏覽器上跑。</p>
-<h3>前置需求</h3>
-<ul>
-<li>Python 3.10 以上（uv 會自動準備合適的 Python，本文以 Python 3.11 實測）</li>
-<li>Git、會用終端機</li>
-<li><a href="https://docs.astral.sh/uv/">uv</a>（取代 venv / pip，安裝方式見步驟 1）</li>
-<li>不需要任何 API key、token 或 <code>.env</code>。這個 starter 全部用模擬資料，開箱即可跑。</li>
-</ul>
-<h3>步驟 1：安裝 uv（一次就好）</h3>
-<p>本專案用 uv 管理環境，取代手動 <code>python -m venv</code> + <code>pip</code>。Ubuntu / macOS：</p>
-<pre><code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></pre>
-<p>Windows（PowerShell）：</p>
-<pre><code>powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"</code></pre>
-<p>裝完重開終端機，<code>uv --version</code> 印得出版本就 OK。</p>
-<h3>步驟 2：取得程式碼、裝依賴、跑起來</h3>
-<p>以下 <code>uv sync</code> / <code>uv run</code> 在 Ubuntu 與 Windows 完全相同。一定要在 repo 根目錄（看得到 <code>app/</code> 的那層）執行，否則啟動會 <code>ModuleNotFoundError: No module named 'app'</code>。</p>
-<pre><code>git clone https://github.com/yazelin/industrial-ai-dashboard-starter.git
+<!doctype html>
+<html lang="zh-Hant-TW" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>工業 AI Dashboard 入門模板｜快速了解</title>
+<meta name="description" content="用模擬 AGV / 機台資料 5 分鐘做出每秒更新的監控儀表板，再沿兩個獨立軸接上真實 MQTT 與 LLM 班報。完整逐步教學在實戰手冊。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#fb923c; --brand-solid:#ea580c;
+  --bg:#0b111b; --bg2:#060a11; --panel:rgba(255,255,255,.05); --border:rgba(255,255,255,.12);
+  --text:#f1eef9; --muted:#a79fbe; --code-bg:#0b0716; --code-text:#d8d2ec; --ok:#7fdca0;
+}
+html[data-theme="light"]{
+  --brand:#c2410c; --brand-solid:#9a3412;
+  --bg:#fbf6f1; --bg2:#f3e7db; --panel:#ffffff; --border:rgba(28,18,52,.12);
+  --text:#1c1630; --muted:#5b5470; --code-bg:#17132b; --code-text:#e7e2f6; --ok:#1f8a4c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 82% -8%, color-mix(in srgb,var(--brand) 22%,transparent), transparent 60%),linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.8;min-height:100vh}
+a{color:var(--brand);text-decoration:none}
+a:hover{filter:brightness(1.15)}
+.wrap{max-width:880px;margin:0 auto;padding:20px 22px 90px}
+.topbar{position:sticky;top:0;z-index:30;background:var(--bg);border-bottom:1px solid var(--border);box-shadow:0 6px 18px -14px rgba(0,0,0,.5)}
+.topbar-inner{max-width:880px;margin:0 auto;padding:12px 22px;display:flex;justify-content:space-between;align-items:center;gap:14px}
+.brand{font-weight:900;color:var(--text)}
+.toprow{display:flex;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);padding:8px 14px;border-radius:999px;font-weight:700;font-size:14px;background:var(--panel);color:var(--text);cursor:pointer}
+.btn.primary{background:var(--brand-solid);border-color:transparent;color:#fff}
+.eyebrow{font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.22em;font-size:12px;color:var(--brand);font-weight:600}
+h1{font-size:clamp(32px,6vw,56px);line-height:1.08;margin:14px 0 16px;font-weight:900;letter-spacing:-.02em}
+.lead{font-size:clamp(18px,2.4vw,22px);color:var(--text);max-width:680px;margin:0 0 10px}
+.sub{color:var(--muted);max-width:680px;margin:0 0 24px}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.nav{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 10px;margin-bottom:6px}
+.nav a{font-size:13px;border:1px solid var(--border);border-radius:999px;padding:6px 12px;background:var(--panel);color:var(--muted);font-weight:500}
+.nav a:hover{color:var(--brand);border-color:var(--brand)}
+section{border:1px solid var(--border);border-radius:20px;background:var(--panel);padding:26px 26px 28px;margin:16px 0;scroll-margin-top:74px}
+h2{font-size:26px;margin:0 0 8px;letter-spacing:-.01em}
+.tag{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--brand);font-weight:600}
+p,li{color:var(--text)}
+.muted{color:var(--muted)}
+ul{padding-left:22px;margin:10px 0}
+li{margin:6px 0}
+pre{background:var(--code-bg);color:var(--code-text);border-radius:12px;padding:15px 16px;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65;margin:10px 0}
+code{font-family:'JetBrains Mono',monospace}
+.step{font-size:13px;color:var(--muted);margin:14px 0 4px;font-weight:600}
+.ok{margin-top:12px;border-left:4px solid var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent);padding:10px 14px;border-radius:8px;color:var(--text)}
+.contrast{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+.contrast th,.contrast td{border:1px solid var(--border);padding:8px 11px;text-align:left;vertical-align:top}
+.contrast th{background:color-mix(in srgb,var(--brand) 16%,transparent);font-weight:700}
+.chapters{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px}
+.ch{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:color-mix(in srgb,var(--brand) 5%,transparent);color:var(--text);font-weight:600}
+.ch:hover{border-color:var(--brand)}
+.ch-n{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--brand);font-weight:700;min-width:22px}
+.get{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px}
+.get-card{flex:1 1 240px;border:1px solid var(--border);border-radius:14px;padding:18px;background:color-mix(in srgb,var(--brand) 6%,transparent)}
+.get-card h3{margin:0 0 6px;font-size:17px}
+.footer{margin-top:36px;color:var(--muted);font-size:13px;text-align:center}
+.theme-toggle{font-family:'Noto Sans TC',sans-serif}
+@media(max-width:640px){.wrap{padding:16px 16px 70px}section{padding:20px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html">← 工業 Dashboard</a>
+    <div class="toprow">
+      <a class="btn" href="https://github.com/yazelin/industrial-ai-dashboard-starter" target="_blank" rel="noopener">GitHub</a>
+      <button class="btn theme-toggle" id="themeBtn" type="button" aria-label="切換深淺色">淺色</button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">工業 AI Dashboard 入門 · 5 分鐘看懂</div>
+    <h1>先玩具、再真實的工廠監控頁</h1>
+    <p class="lead">用模擬 AGV / 機台資料，做出一個<strong>每秒更新的 Web 監控儀表板</strong>，再沿兩個獨立軸把它變成真的：資料源 <code>sim → MQTT</code>、AI 摘要 <code>規則式 → LLM 班報</code>，而前端與 API 一行都不用改。</p>
+    <p class="sub">這頁讓你 5 分鐘知道這是什麼、能做出什麼、真的會動。要逐行、踩雷、部署的完整版，在實戰手冊裡。</p>
+    <div class="cta">
+      <a class="btn primary" href="#quickstart">5 分鐘跑起來 ↓</a>
+      <a class="btn" href="https://github.com/yazelin/industrial-ai-dashboard-starter" target="_blank" rel="noopener">看 GitHub 原始碼</a>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <a href="#what">這是什麼</a>
+    <a href="#outcomes">你會做出什麼</a>
+    <a href="#quickstart">5 分鐘跑起來</a>
+    <a href="#part2">Part 2 對照</a>
+    <a href="#chapters">完整章節</a>
+    <a href="#get">拿完整手冊</a>
+  </nav>
+
+  <section id="what">
+    <div class="tag">What</div>
+    <h2>這是什麼、解決什麼</h2>
+    <p>自動化、AGV、PLC、工業 IoT 工程師常卡在「我想先做出一個能展示給客戶看的 Web 監控介面，但要從哪裡開始？資料契約怎麼定？REST 跟 WebSocket 怎麼搭？接真實設備又是另一套嗎？」</p>
+    <p>這個範本分兩軌：<strong>前半段</strong>用模擬資料 + 樣板摘要做出一個會動的 dashboard，讓你看懂資料契約、REST、WebSocket、前端吃 JSON；<strong>後半段</strong>沿兩個獨立軸把它變成真的 —— 資料源從模擬器換成 MQTT 真設備、AI 摘要從規則式換成 LLM 班報，而前端與 API 一行都不用改。先用玩具看懂整條路，再逐軸接上真實資料與 AI，你會清楚知道哪些是可抽換的、哪些是你自己的責任。</p>
+  </section>
+
+  <section id="outcomes">
+    <div class="tag">Outcomes</div>
+    <h2>你會做出什麼</h2>
+    <ul>
+      <li>AGV 狀態監控 demo。</li>
+      <li>機台狀態 dashboard。</li>
+      <li>工廠資料 WebSocket 推播骨架（每秒推一次即時快照）。</li>
+      <li>PoC 展示與客戶需求訪談用的可展示介面。</li>
+      <li>看清資料源是可抽換的：同一個 UI，假資料能換成真 MQTT。</li>
+    </ul>
+  </section>
+
+  <section id="quickstart">
+    <div class="tag">Quick Win</div>
+    <h2>5 分鐘跑起來</h2>
+    <p class="muted">需要 <a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener">uv</a>。不需要任何 API key、token 或 <code>.env</code>，這個 starter 全部用模擬資料，開箱即可跑。</p>
+    <div class="step"><strong>1.</strong> 取得並安裝</div>
+    <pre><code>git clone https://github.com/yazelin/industrial-ai-dashboard-starter.git
 cd industrial-ai-dashboard-starter
-uv sync
-uv run uvicorn app.main:app --reload --port 8000</code></pre>
-<p><code>uv sync</code> 會依 <code>pyproject.toml</code> + <code>uv.lock</code> 自動建立 <code>.venv</code> 並裝好套件（毋須手動 venv / activate），成功時印出（實跑擷取）：</p>
-<pre><code>Using CPython 3.11.13
-Creating virtual environment at: .venv
-Resolved 21 packages in 959ms
-Prepared 18 packages in 712ms
-Installed 18 packages in 16ms
- + fastapi==0.115.6
- + uvicorn==0.34.0
- ... (共 18 個套件)</code></pre>
-<p>接著 <code>uv run uvicorn ...</code> 成功的話你會看到（實跑擷取，這次用 8011 埠測試）：</p>
-<pre><code>INFO:     Will watch for changes in these directories: ['/.../industrial-ai-dashboard-starter']
+uv sync</code></pre>
+    <div class="step"><strong>2.</strong> 啟動服務（在 repo 根目錄執行）</div>
+    <pre><code>uv run uvicorn app.main:app --reload --port 8000</code></pre>
+    <div class="step"><strong>3.</strong> 啟動的真實輸出（實跑擷取，這次用 8011 埠測試）</div>
+    <pre><code>INFO:     Will watch for changes in these directories: ['/.../industrial-ai-dashboard-starter']
 INFO:     Uvicorn running on http://127.0.0.1:8011 (Press CTRL+C to quit)
 INFO:     Started reloader process [1611328] using WatchFiles
 INFO:     Started server process [1611330]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.</code></pre>
-<p>加新套件用 <code>uv add &lt;套件&gt;</code>（會同時更新 <code>pyproject.toml</code> 與 <code>uv.lock</code>）。</p>
-<p>看到 <code>Application startup complete.</code> 就代表服務起來了。終端機會停在這裡持續執行，這是正常的。</p>
-<h3>步驟 3：打開儀表板</h3>
-<p>瀏覽器開 http://127.0.0.1:8000/ 。你會看到深藍底的「Industrial AI Dashboard」單頁：最上方一排橘色邊框告警條、中段「AGVs」與「Machines」兩張卡片、最下方一塊每秒在跳的原始 JSON。數字每秒在動就代表 WebSocket 串流通了。</p>
-<h3>步驟 4：用 curl 驗證 API</h3>
-<pre><code>curl http://127.0.0.1:8000/api/snapshot</code></pre>
-<p>真實輸出（剛好兩台 AGV 電量低於 20，所以 alerts 真的有東西）：</p>
-<pre><code>{
-  "timestamp": 1780342125.2277737,
-  "agvs": [
-    {"id": "AGV-1", "x": 47.0, "y": 17.2, "battery": 46.5, "status": "loading"},
-    {"id": "AGV-2", "x": 19.0, "y": 21.9, "battery": 11.2, "status": "charging"},
-    {"id": "AGV-3", "x": 19.5, "y": 52.4, "battery": 9.3, "status": "charging"}
-  ],
-  "machines": [
-    {"id": "AOI-1", "status": "warn", "ng_rate": 0.52},
-    {"id": "PLC-Press-2", "status": "stop", "temperature": 49.2}
-  ],
-  "alerts": [
-    {"level": "warning", "message": "AGV-2 low battery"},
-    {"level": "warning", "message": "AGV-3 low battery"}
-  ]
-}</code></pre>
-<p>電量是隨時間擺動的，所以你跑的時候 alerts 可能是空陣列，多刷新幾次就會看到 low battery 告警冒出來。再試 AI summary（預設規則式班報）：</p>
-<pre><code>curl http://127.0.0.1:8000/api/ai-summary
-{"summary": "AGV 3 台在線；低電量 1 台(AGV-3)；異常機台 0 台；告警 1 則。"}</code></pre>
-<p>這個 summary 預設是規則式班報（確定性，內容隨狀態變動）；設 AI_SUMMARY=llm 並裝 ai extra 即切換到 LLM 班報（見 docs/08），不用改程式。</p>
-<h3>整體 OK 的判斷標準</h3>
-<ul>
-<li>終端機停在 <code>Application startup complete.</code>，沒有 traceback。</li>
-<li>http://127.0.0.1:8000/ 打得開，最下方 JSON 每秒在跳。</li>
-<li><code>/api/snapshot</code> 回傳含 agvs / machines / alerts 的 JSON。</li>
-<li><code>/api/ai-summary</code> 回傳一句 summary。</li>
-</ul>
-<h3>常用入口</h3>
-<ul>
-<li>GET /：dashboard UI</li>
-<li>GET /api/snapshot：目前 AGV / machines / alerts 快照</li>
-<li>GET /api/ai-summary：AI 班報（預設規則式；AI_SUMMARY=llm 切換 LLM）</li>
-<li>WebSocket /ws：每秒推送即時快照</li>
-</ul></section><section><h2>工業 AI Dashboard 入門模板：架構說明</h2>
-<h3>核心檔案</h3>
-<ul>
-<li>app/main.py：FastAPI、靜態檔案、REST API、WebSocket</li>
-<li>app/data_source.py：模擬 AGV / machines / alerts 資料</li>
-<li>static/index.html：dashboard 頁面</li>
-<li>static/app.js：連線 WebSocket 並渲染資料</li>
-<li>static/style.css：dashboard UI 樣式</li>
-</ul>
-<h3>資料流</h3>
-<ol>
-<li>使用者或 client 發出請求。</li>
-<li>FastAPI / stdio 入口接收資料。</li>
-<li>handler 解析訊息與設定。</li>
-<li>adapter / tool / search 層執行實際工作。</li>
-<li>回傳最小可理解的結果。</li>
-</ol>
-<h3>設計原則</h3>
-<ul>
-<li>先讓流程可跑，再做漂亮抽象。</li>
-<li>這個 starter 沒有任何 secret；等你接真實資料來源或 LLM 時，token 才放進環境變數，不要寫死在程式裡。</li>
-<li>每一層保持可以替換：資料來源、AI provider、部署方式。</li>
-<li>範例程式刻意保持小，方便你看懂後改成自己的版本。</li>
-</ul></section><section><h2>工業 AI Dashboard 入門模板：完整操作流程</h2>
-<p>quickstart 讓你把東西跑起來；這一節帶你真的改一次資料來源，並在章末做一個我已實跑驗證的小練習。</p>
-<h3>全貌：資料怎麼從 Python 流到瀏覽器</h3>
-<p>核心只有一個函式 <code>simulated_snapshot()</code>，它回傳一個 dict，前端只認得這個 dict 的「形狀」。你要做的事，就是把它換成讀真實資料，但保持回傳形狀不變。前端 <code>static/app.js</code> 只依賴：<code>d.agvs</code>（id/x/y/status/battery）、<code>d.machines</code>（id/status）、<code>d.alerts</code>（level/message）。</p>
-<h3>步驟 1：把模擬來源換成真實來源（before / after）</h3>
-<p>原則：只改 <code>app/data_source.py</code>，把外部資料 map 成同樣形狀。改之前是用三角函數產生假資料；改成從真實來源讀，例如：</p>
-<pre><code>import time, requests   # 記得 uv add requests（會同時更新 pyproject.toml 與 uv.lock）
-FLEET_API = "http://10.0.0.5:9000/agvs"   # 換成你的現場端點
+    <div class="step"><strong>4.</strong> 用 curl 驗證 API（最快、不靠瀏覽器）</div>
+    <pre><code>curl http://127.0.0.1:8000/api/ai-summary</code></pre>
+    <div class="step"><strong>5.</strong> 真實輸出（內容隨模擬狀態變動，格式固定）</div>
+    <pre><code>{"summary": "AGV 3 台在線；低電量 1 台(AGV-3)；異常機台 0 台；告警 1 則。"}</code></pre>
+    <div class="ok">成功長這樣：終端機停在 <strong>Application startup complete.</strong> 沒有 traceback，<code>/api/ai-summary</code> 回一句 <code>summary</code>，瀏覽器開 <a href="http://127.0.0.1:8000/" target="_blank" rel="noopener">http://127.0.0.1:8000/</a> 最下方 JSON 每秒在跳，就代表整條路通了。</div>
+  </section>
 
-def real_snapshot():
-    raw = requests.get(FLEET_API, timeout=2).json()
-    agvs = [{
-        "id": r["agv_name"], "x": r["pos_x"], "y": r["pos_y"],
-        "battery": r["soc"], "status": r["mode"],
-    } for r in raw["units"]]
-    machines = []
-    alerts = [{"level": "warning", "message": a["id"]+" low battery"}
-              for a in agvs if a["battery"] < 20]
-    return {"timestamp": time.time(), "agvs": agvs, "machines": machines, "alerts": alerts}</code></pre>
-<p>改完跑出來，<code>/api/snapshot</code> 的 JSON 形狀完全一樣，只是數字變成現場真實值，前端不用改任何程式。</p>
-<p>提醒：<code>requests.get</code> 是阻塞呼叫，放在 <code>/ws</code> 迴圈會卡住 event loop；正式接線請用背景任務定時更新一份 cache，handler 只讀 cache。</p>
-<h3>步驟 2：加入歷史與 AI summary（方向）</h3>
-<ul>
-<li>歷史：背景任務把每次 snapshot 存進 ring buffer 或時序資料庫，再多開 <code>GET /api/history</code>。</li>
-<li>AI summary：<code>/api/ai-summary</code> 預設回 <code>rule_summary()</code>（確定性規則式班報）；設 <code>AI_SUMMARY=llm</code> 並裝 <code>ai</code> extra 即切換到 <code>llm_summary()</code>（OpenAI 相容），不用改程式。詳見 docs/08。</li>
-</ul>
-<h3>動手練習：新增一台機台 + 一條告警規則（已實跑驗證）</h3>
-<p>目標：在 <code>machines</code> 多一台 <code>CNC-3</code>，並加「溫度 &gt; 80 發 critical 告警」的規則。在 <code>app/data_source.py</code> 的 machines 末端加上：</p>
-<pre><code>{"id": "CNC-3", "status": random.choice(["run","run","stop"]), "temperature": round(60+random.random()*30, 1)},</code></pre>
-<p>並在 alerts 後面加一行：</p>
-<pre><code>alerts += [{"level": "critical", "message": m["id"]+" overheat"} for m in machines if m.get("temperature", 0) > 80]</code></pre>
-<p>存檔（<code>--reload</code> 自動重載），刷新 <code>/api/snapshot</code>。這是我實跑擷取的真實輸出（剛好遇到 CNC-3 89.4 度，觸發 critical 告警）：</p>
-<pre><code>"machines": [
-  {"id": "AOI-1", "status": "run", "ng_rate": 1.54},
-  {"id": "PLC-Press-2", "status": "stop", "temperature": 54.1},
-  {"id": "CNC-3", "status": "run", "temperature": 89.4}
-],
-"alerts": [
-  {"level": "warning", "message": "AGV-3 low battery"},
-  {"level": "critical", "message": "CNC-3 overheat"}
-]</code></pre>
-<p>瀏覽器的「Machines」卡片會多一列 CNC-3；溫度衝破 80 時，告警條會多一條 critical: CNC-3 overheat。溫度是隨機的，多刷幾次就會看到它出現又消失。這個練習完整體現了 starter 的擴充方式：改 <code>data_source.py</code> 的回傳內容，前端自動跟著變。</p>
-<h3>完整流程後的下一步</h3>
-<p>把最小流程跑通、練習做完之後，先別急著堆功能。挑一個你手上真實但很小的情境，讓這個 starter 先把那一個問題解乾淨，再往外長。</p></section><section><h2>工業 AI Dashboard 入門模板：部署筆記</h2>
-<h3>部署前檢查</h3>
-<ul>
-<li>本機流程已經跑通（<code>/api/snapshot</code> 有回 JSON、儀表板每秒更新）。</li>
-<li>README 的啟動指令與實際程式一致。</li>
-<li>確認部署平台用 <code>uv sync</code>（依 <code>pyproject.toml</code> + <code>uv.lock</code>）裝好依賴；正式環境可用 <code>uv sync --frozen --no-dev</code> 鎖定 lockfile。</li>
-<li>這個 starter 本身沒有 <code>.env</code>、沒有 secret、沒有 webhook，也沒有 <code>/health</code> endpoint，這幾項先不用煩惱。等你接了真實資料來源（可能帶 API key 或內網位址），再把這些秘密放進部署平台的 secrets，不要 commit 進 repo。</li>
-</ul>
-<h3>啟動指令</h3>
-<pre><code>
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+  <section id="part2">
+    <div class="tag">Part 2 · 對照組</div>
+    <h2>模擬 + stub 摘要後，接真實 MQTT 與 LLM 班報</h2>
+    <p>前半段你做出的是個<strong>玩具</strong>：資料是假的、摘要是死的。後半段沿兩個各自可獨立開關的軸把它「變成真的」，而前端與 API 一行都不用改。</p>
+    <table class="contrast">
+      <tr><th>軸</th><th>Baseline（Part 1）</th><th>升級（Part 2）</th><th>切換</th></tr>
+      <tr><td>資料源</td><td><code>simulated_snapshot()</code> 假值</td><td>MQTT 真設備餵進來</td><td><code>SOURCE_BACKEND=sim|mqtt</code></td></tr>
+      <tr><td>AI 摘要</td><td>規則式班報（確定性）</td><td>LLM 班報（會講人話）</td><td><code>AI_SUMMARY=rule|llm</code></td></tr>
+    </table>
+    <p>核心一句：<strong>資料源與 AI 都是可抽換的層，但餵 LLM 的 context 與安全邊界永遠是你自己的責任。</strong>規則式班報確定、免費、可測，是 LLM 不穩或沒預算時的 fallback；預設 <code>sim</code> + <code>rule</code> 永遠零相依可跑，要哪個能力才裝哪個 extra。完整對照在 <a href="https://github.com/yazelin/industrial-ai-dashboard-starter/blob/main/docs/08-real-data-and-ai-summary.md" target="_blank" rel="noopener">docs/08</a>。</p>
+  </section>
 
-</code></pre>
-<h3>常見部署選項</h3>
-<ul>
-<li>Render / Railway / Fly.io：適合快速 demo。</li>
-<li>VPS + Docker / systemd：適合長期自管。</li>
-<li>公司內網主機：適合企業內部工具，但要處理網路與權限。</li>
-<li>NAS / edge gateway：適合工業或內部自動化場景。</li>
-</ul>
-<h3>部署後驗證</h3>
-<pre><code>
-curl http://127.0.0.1:8000/api/snapshot
+  <section id="chapters">
+    <div class="tag">All Chapters</div>
+    <h2>完整章節（想一章一章讀完整版）</h2>
+    <p class="muted">這頁是快速了解；下面每一章都是完整內容，在 GitHub 上點開就能讀。</p>
+    <div class="chapters">
+      <a class="ch" href="https://github.com/yazelin/industrial-ai-dashboard-starter/blob/main/docs/00-overview.md" target="_blank" rel="noopener"><span class="ch-n">00</span><span>總覽</span></a>
+      <a class="ch" href="https://github.com/yazelin/industrial-ai-dashboard-starter/blob/main/docs/01-quickstart.md" target="_blank" rel="noopener"><span class="ch-n">01</span><span>快速開始</span></a>
+      <a class="ch" href="https://github.com/yazelin/industrial-ai-dashboard-starter/blob/main/docs/02-architecture.md" target="_blank" rel="noopener"><span class="ch-n">02</span><span>架構</span></a>
+      <a class="ch" href="https://github.com/yazelin/industrial-ai-dashboard-starter/blob/main/docs/03-step-by-step.md" target="_blank" rel="noopener"><span class="ch-n">03</span><span>逐步實作</span></a>
+      <a class="ch" href="https://github.com/yazelin/industrial-ai-dashboard-starter/blob/main/docs/04-deployment.md" target="_blank" rel="noopener"><span class="ch-n">04</span><span>部署</span></a>
+      <a class="ch" href="https://github.com/yazelin/industrial-ai-dashboard-starter/blob/main/docs/05-common-pitfalls.md" target="_blank" rel="noopener"><span class="ch-n">05</span><span>常見踩雷</span></a>
+      <a class="ch" href="https://github.com/yazelin/industrial-ai-dashboard-starter/blob/main/docs/06-customize-for-your-use-case.md" target="_blank" rel="noopener"><span class="ch-n">06</span><span>改造成你的場景</span></a>
+      <a class="ch" href="https://github.com/yazelin/industrial-ai-dashboard-starter/blob/main/docs/07-workshop-and-consulting.md" target="_blank" rel="noopener"><span class="ch-n">07</span><span>工作坊與顧問</span></a>
+      <a class="ch" href="https://github.com/yazelin/industrial-ai-dashboard-starter/blob/main/docs/08-real-data-and-ai-summary.md" target="_blank" rel="noopener"><span class="ch-n">08</span><span>真實資料 + AI 班報（Part 2）</span></a>
+    </div>
+  </section>
 
-</code></pre>
-<p>接著再測真正的業務流程，不要只看服務有沒有啟動。</p>
-<h3>實務提醒</h3>
-<p>部署不是最後一步。正式使用前至少要補：log、錯誤告警、權限控管、備份策略、secret rotation，以及基本監控。</p></section><section><h2>工業 AI Dashboard 入門模板：常見問題與踩雷清單</h2>
-<p>以下錯誤訊息都是實際跑這個 starter 時會遇到、且實測重現過的。</p>
-<h3>1. 在錯的目錄啟動：No module named 'app'</h3>
-<p><code>uvicorn app.main:app</code> 用 import path 找程式，當前目錄要看得到 <code>app/</code>。在別的目錄啟動會出現：</p>
-<pre><code>ModuleNotFoundError: No module named 'app'</code></pre>
-<p>修法：回到 repo 根目錄（<code>ls</code> 看得到 app/、static/、pyproject.toml）再用 <code>uv run uvicorn app.main:app --reload --port 8000</code> 啟動。</p>
-<h3>2. 連接埠被占用：address already in use</h3>
-<p>8000 埠已被別的程式（包括你上一個沒關掉的 uvicorn）占用時：</p>
-<pre><code>ERROR:    [Errno 98] error while attempting to bind on address ('127.0.0.1', 8000): address already in use</code></pre>
-<p>修法：換埠 <code>--port 8001</code>（網址也跟著改），或 <code>lsof -i :8000</code> 找到 PID 後 <code>kill</code>。</p>
-<h3>3. WebSocket 連不上：路徑打錯</h3>
-<p>前端連的是 <code>/ws</code>。若改前端時把路徑打成 <code>/websocket</code> 之類，畫面會停在空白不再更新；連錯路徑伺服器端會回：</p>
-<pre><code>server rejected WebSocket connection: HTTP 403</code></pre>
-<p>修法：確認 WebSocket URL 路徑是 <code>/ws</code>，協定 http 用 ws、https 用 wss（app.js 已自動判斷）。改完在瀏覽器硬重新整理。</p>
-<h3>4. 看到空的 alerts，以為壞了</h3>
-<p><code>/api/snapshot</code> 有時回 <code>"alerts": []</code> 不是 bug。告警是「AGV 電量低於 20」才產生，電量隨時間擺動，等幾秒或多刷新就會看到。</p>
-<h3>5. 終端機卡住不動，其實正常</h3>
-<p>啟動後游標停在 <code>Application startup complete.</code> 是對的，uvicorn 是常駐服務。另開一個終端機去 curl，要停就在這個視窗按 Ctrl+C。</p>
-<h3>6. uv 沒裝 / 忘了 uv sync</h3>
-<p><code>uv: command not found</code>（Windows 為 <code>'uv' is not recognized</code>）代表還沒裝 uv 或裝完沒重開終端機——照步驟 1 裝好、重開新終端機，<code>uv --version</code> 有版本再繼續。若沒先 <code>uv sync</code>（或 <code>git pull</code> 進新依賴沒重新 sync）就繞過 uv 啟動，會看到 <code>ModuleNotFoundError: No module named 'fastapi'</code>——先 <code>uv sync</code> 再 <code>uv run uvicorn ...</code> 即可。</p>
-<h3>問別人前準備</h3>
-<ul>
-<li>repo / branch、Python 版本、你在哪個目錄、用什麼指令啟動</li>
-<li>完整錯誤訊息（整段 traceback，不是只貼最後一行）</li>
-<li>你預期看到什麼、實際看到什麼</li>
-</ul></section><section><h2>工業 AI Dashboard 入門模板：改成你的使用場景</h2>
-<h3>可延伸方向</h3>
-<p>接 MQTT 與 LLM 班報已內建為後半段對照組（見 docs/08）：SOURCE_BACKEND=mqtt、AI_SUMMARY=llm 即可切換。本節列的是再往外延伸的方向。</p>
-<ul>
-<li>接 ROS2：把 ROS topic bridge 成 dashboard JSON（沿用後半段「換資料源」的做法）。</li>
-<li>接 PLC / Modbus：用 adapter 讀取 tag，再轉成 agvs / machines / alerts。</li>
-<li>hybrid 摘要：把規則式 + LLM 合併排序（規則式當 fallback）。</li>
-</ul>
-<h3>改造原則</h3>
-<ul>
-<li>一次只改一個層次：先改資料來源，再改 UI，再改部署。</li>
-<li>先保留原本可跑的範例，另開 branch 做實驗。</li>
-<li>每加一個外部服務，就加一個健康檢查或 smoke test。</li>
-<li>先做 PoC，再決定要不要產品化。</li>
-</ul>
-<h3>適合拿來做課程 / 工作坊的題目</h3>
-<ul>
-<li>從零跑起這個 starter。</li>
-<li>改成自己的真實場景。</li>
-<li>加入權限、部署與監控。</li>
-<li>現場 debug 學員遇到的問題。</li>
-</ul></section><section><h2>工業 AI Dashboard 入門模板：工作坊與顧問協助</h2>
-<p>這個 repo 的教學內容會盡量公開，讓你可以自己照著做。</p>
-<p>如果你需要的不是「看文件」，而是希望有人陪你把它改成自己的情境，可以考慮工作坊或顧問協助。</p>
-<h3>適合找我協助的情況</h3>
-<ul>
-<li>你照 README 做但卡在 token、webhook、部署或環境問題。</li>
-<li>你想把範例改成公司內部流程。</li>
-<li>你需要幫客戶或老闆做一個能展示的 PoC。</li>
-<li>你想知道這個 starter 上線前還缺哪些安全與維運設計。</li>
-<li>你想用這個題目規劃內訓或小班課程。</li>
-</ul>
-<h3>可以提供的形式</h3>
-<ul>
-<li>2 小時線上工作坊。</li>
-<li>小班陪跑與 Q&amp;A。</li>
-<li>一對一 debug / code review。</li>
-<li>公司 PoC 需求訪談與架構建議。</li>
-<li>協助部署到 VPS、雲端平台或公司內網。</li>
-</ul>
-<h3>聯絡方式</h3>
-<ul>
-<li>GitHub Pages：https://yazelin.github.io/industrial-ai-dashboard-starter/</li>
-<li>GitHub repo：https://github.com/yazelin/industrial-ai-dashboard-starter</li>
-<li>Email：yazelin@ching-tech.com</li>
-</ul>
-<p>建議你先照公開教學跑一次，然後帶著具體錯誤訊息或想改造的場景來討論，效率最高。</p></section><section><h2>關於作者</h2>
-<p>這個範本由 <strong>林亞澤（Yaze Lin）</strong> 維護 — 出身機電自動化系統整合，現在把同一套工程方法用在 AI 產品上。</p>
-<ul>
-<li>任職於 <strong>擎添工業 ChingTech</strong>（1984 年成立的機電自動化公司：PLC 程式、機械手臂、AGV 無人搬運、半導體封測／PCB／面板／光學產線整合）。</li>
-<li>技術筆記與更多範例：<a href="https://yazelin.github.io">yazelin.github.io</a> · GitHub <a href="https://github.com/yazelin">@yazelin</a></li>
-</ul>
-<h3>從範本到正式產品</h3>
-<p>你正在看的即時工業儀表板範本，是 CTOS 工業監控模組的最小骨架。如果你想看同樣的想法做成正式、上線中的產品：</p>
-<ul>
-<li><strong>CTOS</strong> — 企業 AI 工作平台：macOS 風格 Web 桌面、知識庫 RAG 檢索、產業專屬 Agent、LINE Bot 整合，資料留在台灣。<a href="https://ching-tech.com">ching-tech.com</a> · <a href="https://ching-tech.github.io">品牌站</a></li>
-<li><strong>CTOS-Lite / CT JINN</strong> — 把公司裝進 LINE 的個人版 AI 助理，加 LINE 即可試用：<a href="https://line.me/R/ti/p/@285fjkky">@285fjkky</a></li>
-<li><strong>Mori Desktop</strong> — 個人 AI 管家桌面應用（Tauri 2 + Rust + React）：<a href="https://github.com/yazelin/mori-desktop">github.com/yazelin/mori-desktop</a></li>
-<li><strong>AgentOS</strong> — 跨 CLI 的 agent 治理平台（開發中）</li>
-</ul>
-<p>想把這個範本落地成你公司的內部系統，或想上一堂從 0 到部署的課？來信 yazelin@ching-tech.com，或追蹤上面的連結。</p></section><section><h2>工業 AI Dashboard 入門模板：接真實資料 + AI 班報(對照組)</h2>
-<p>前半段你做出了一個會動的 dashboard:<code>simulated_snapshot()</code> 產假的 AGV/機台資料,WebSocket 每秒推給前端,<code>/api/ai-summary</code> 回一句樣板。它教會你<strong>資料形狀、<code>/api/snapshot</code> REST、<code>/ws</code> 推送、前端怎麼吃 JSON</strong>。</p>
-<p>但它是個<strong>玩具</strong>:資料是假的、摘要是死的。這一段是課程後半 —— 把同一個 dashboard 沿兩個獨立的軸「變成真的」,而且每一步都讓你回頭看清「你到底學到了什麼」。</p>
-<p>兩個軸各自可獨立開關(可以只開一個):</p>
-<table>
-<tr><th>軸</th><th>Baseline(Part 1)</th><th>升級(Part 2)</th><th>切換</th><th>extra</th></tr>
-<tr><td>資料源</td><td><code>simulated_snapshot()</code></td><td>MQTT 真設備餵進來</td><td><code>SOURCE_BACKEND=sim|mqtt</code></td><td><code>mqtt</code></td></tr>
-<tr><td>AI 摘要</td><td>規則式班報(確定性)</td><td>LLM 班報(會講人話)</td><td><code>AI_SUMMARY=rule|llm</code></td><td><code>ai</code></td></tr>
-</table>
-<h3>軸 A:模擬資料 → 真實 MQTT</h3>
-<p><strong>Part 1 你手上有什麼</strong>:<code>/ws</code> 與 <code>/api/snapshot</code> 直接呼叫 <code>simulated_snapshot()</code>,資料是 <code>math</code>/<code>random</code> 算出來的假值。你學會了 dashboard 的資料契約(agvs / machines / alerts)。</p>
-<p><strong>Part 2 換成什麼</strong>:工廠現場的設備(PLC、AGV 控制器、edge gateway)把狀態 publish 到 MQTT broker;<code>app/ingest_mqtt.py</code> 一個背景 task 訂閱 topic、把最新一筆存進 cache;<code>SOURCE_BACKEND=mqtt</code> 時 dashboard 改從 cache 讀。</p>
-<pre><code>uv sync --extra mqtt
-# 終端 A:啟動 dashboard(改吃 MQTT)
-SOURCE_BACKEND=mqtt MQTT_URL=mqtt://127.0.0.1:1883 uv run uvicorn app.main:app
-# 終端 B:把一筆 snapshot publish 到 dashboard/snapshot topic(用任何 MQTT client)</code></pre>
-<p>跑對照測試(用 in-process broker,不需要裝 mosquitto):</p>
-<pre><code>PYTHONPATH=. uv run python mqtt_smoke_test.py</code></pre>
-<p>它起一個 in-process broker、跑 app 的 subscriber、publish 一筆已知 snapshot,然後斷言 <code>/api/snapshot</code> 回的就是那筆。成功會看到 <code>OK: MQTT ingest smoke passed</code>。</p>
-<p><strong>你因此看清什麼</strong>:資料源是<strong>可抽換的</strong>——<code>/ws</code>、<code>/api/snapshot</code>、整個前端<strong>一行都不用改</strong>,只是後面餵資料的人從「模擬器」換成「真設備」。這就是「把 PoC 接上真實產線」的第一步,也是為什麼 Part 1 要先把資料契約定清楚。</p>
-<h3>軸 B:樣板摘要 → 規則式 → LLM 班報</h3>
-<p><strong>Part 1 你手上有什麼</strong>:原本 <code>/api/ai-summary</code> 是一行 f-string。這一段先把它升級成<strong>真.規則式摘要</strong>(<code>app/summary.py:rule_summary</code>):數 AGV、列低電量、列異常機台、數告警 —— 確定性、可測、不需要任何外部服務。</p>
-<p><strong>Part 2 換成什麼</strong>:<code>llm_summary</code> 把同一份 snapshot 丟給 OpenAI 相容的 LLM,產一句自然語言班報;<code>AI_SUMMARY=llm</code> 切換。</p>
-<pre><code>uv sync --extra ai
-# .env / 環境變數:AI_SUMMARY=llm, HTTP_LLM_ENDPOINT, HTTP_LLM_API_KEY, MODEL_NAME
-AI_SUMMARY=llm uv run uvicorn app.main:app</code></pre>
-<p>跑對照測試(用本地假 OpenAI server,免 API key):</p>
-<pre><code>PYTHONPATH=. uv run python ai_smoke_test.py</code></pre>
-<p>它斷言:規則式摘要對固定 snapshot 回確定字串;LLM 路徑接到(假的)OpenAI endpoint 回班報。成功會看到 <code>OK: AI summary smoke passed</code>。</p>
-<p><strong>你因此看清什麼</strong>:摘要從「死板模板」變成「會講人話」,但<strong>規則式仍然有用</strong>——它確定、免費、可測,是 LLM 不穩或沒預算時的 fallback。你也看清 LLM 只是一層:餵它的 context(snapshot)還是你自己準備的。</p>
-<h3>回顧:這個 dashboard 你一路學到的</h3>
-<ul>
-<li><strong>Part 1(玩具)</strong>:資料契約、REST + WebSocket、前端吃 JSON —— 先讓整條路會動。</li>
-<li><strong>軸 A</strong>:資料源可抽換 —— 同一個 UI,假資料換成真 MQTT,學到「PoC → 真產線」怎麼接。</li>
-<li><strong>軸 B</strong>:摘要從模板 → 規則式 → LLM —— 學到「確定性 baseline」與「LLM 升級」各自的價值與取捨。</li>
-</ul>
-<p>兩個軸都用 <strong>optional extra</strong> 隔離(base 安裝只有 fastapi + uvicorn),要哪個能力才裝哪個;預設 <code>sim</code> + <code>rule</code> 永遠零相依可跑。</p></section></main><section id="contact"><h2>需要手把手協助？</h2><p>公開文件適合照著跑；工作坊與顧問適合處理你的真實環境、debug、部署、權限與客製化改造。</p><p><a class="btn primary" href="https://yazelin.github.io/industrial-ai-dashboard-starter/#waitlist">留下 email / 收到開課通知</a></p></section><p class="footer">© Yaze Lin. 教學內容公開於 GitHub，歡迎 fork、star、照著做。</p></div></body></html>
+  <section id="get">
+    <div class="tag">Next</div>
+    <h2>要完整逐步？</h2>
+    <p>這頁是快速了解。<strong>逐行讀懂、架構拆解、踩雷清單、部署、改成你的場景</strong>都在實戰手冊（PDF）裡。</p>
+    <div class="get">
+      <div class="get-card">
+        <h3>取得實戰手冊（免費）</h3>
+        <p class="muted">留個 Email，我把完整 PDF 寄給你。</p>
+        <p><a class="btn primary" href="index.html#waitlist">下載手冊 →</a></p>
+      </div>
+      <div class="get-card">
+        <h3>看原始碼 / 自己改</h3>
+        <p class="muted">程式碼公開，直接拿去改、拿去用。</p>
+        <p><a class="btn" href="https://github.com/yazelin/industrial-ai-dashboard-starter" target="_blank" rel="noopener">GitHub repo →</a></p>
+      </div>
+    </div>
+  </section>
+
+  <p class="footer">© 擎添工業 ChingTech · 林亞澤（Yaze Lin）· 內容可自由用於學習</p>
+</div>
+
+<script>
+(function(){
+  var KEY='industrial-theme', root=document.documentElement, btn=document.getElementById('themeBtn');
+  function apply(t){ root.setAttribute('data-theme', t); btn.textContent = (t==='dark' ? '淺色' : '深色'); }
+  var saved = localStorage.getItem(KEY);
+  apply(saved || 'light');
+  btn.addEventListener('click', function(){
+    var next = root.getAttribute('data-theme')==='dark' ? 'light' : 'dark';
+    localStorage.setItem(KEY, next); apply(next);
+  });
+})();
+</script>
+</body>
+</html>
