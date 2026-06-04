@@ -229,11 +229,11 @@ curl http://127.0.0.1:8000/api/snapshot
 <li>你預期看到什麼、實際看到什麼</li>
 </ul></section><section><h2>工業 AI Dashboard 入門模板：改成你的使用場景</h2>
 <h3>可延伸方向</h3>
+<p>接 MQTT 與 LLM 班報已內建為後半段對照組（見 docs/08）：SOURCE_BACKEND=mqtt、AI_SUMMARY=llm 即可切換。本節列的是再往外延伸的方向。</p>
 <ul>
-<li>接 MQTT：背景 task 訂閱 topic，更新最新狀態 cache。</li>
-<li>接 ROS2：把 ROS topic bridge 成 dashboard JSON。</li>
-<li>接 PLC：用 adapter 讀取 tag，再轉成 agvs / machines / alerts。</li>
-<li>加 AI：把異常告警與歷史摘要交給 LLM 生成班報。</li>
+<li>接 ROS2：把 ROS topic bridge 成 dashboard JSON（沿用後半段「換資料源」的做法）。</li>
+<li>接 PLC / Modbus：用 adapter 讀取 tag，再轉成 agvs / machines / alerts。</li>
+<li>hybrid 摘要：把規則式 + LLM 合併排序（規則式當 fallback）。</li>
 </ul>
 <h3>改造原則</h3>
 <ul>
