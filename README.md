@@ -33,6 +33,7 @@ Automation engineers who want web dashboards before connecting real factory data
 - Zero-build HTML/CSS/JS UI
 - Simulated AGV/machine data
 - Adapter point for MQTT / ROS2 / Modbus
+- 後半段:接真實 MQTT 資料(`mqtt` extra)+ LLM 班報(`ai` extra)— 見 `docs/08-real-data-and-ai-summary.md`
 
 ## Quick start
 
@@ -65,6 +66,18 @@ uv run uvicorn app.main:app --reload --port 8000
 ```
 
 `uv sync` 會依 `pyproject.toml` + `uv.lock` 自動建立 `.venv` 並裝好套件（毋須手動 venv / activate）；`uv run` 直接在那個環境裡執行。加新套件用 `uv add <套件>`。沒裝 uv 的話 `pip install .` 也能裝，但本教學以 uv 為主。
+
+### 後半段:接真實資料 + AI 班報(對照組)
+
+```bash
+uv sync --extra mqtt && PYTHONPATH=. uv run python mqtt_smoke_test.py   # 真資料對照(in-process broker)
+uv sync --extra ai   && PYTHONPATH=. uv run python ai_smoke_test.py     # LLM 班報對照(假 OpenAI)
+SOURCE_BACKEND=mqtt AI_SUMMARY=llm uv run uvicorn app.main:app          # 兩軸都開
+```
+
+詳細說明見 `docs/08-real-data-and-ai-summary.md`。
+
+- 後半段(真資料 + AI 班報):docs/08-real-data-and-ai-summary.md
 
 ## Learn / get help
 

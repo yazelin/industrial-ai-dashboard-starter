@@ -28,6 +28,7 @@
 - AGV / AOI / PLC 模擬資料
 - Zero-build HTML/CSS/JS dashboard UI
 - 預留 MQTT / ROS2 / Modbus / PLC API adapter point
+- 內建後半段對照組(`docs/08`):資料源 sim→MQTT、AI 摘要 規則式→LLM,各為 optional extra、可獨立開關
 
 ## Assets
 
