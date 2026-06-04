@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        track: [base, mqtt, ai]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync (base)
+        if: matrix.track == 'base'
+        run: uv sync
+      - name: Base smoke
+        if: matrix.track == 'base'
+        run: PYTHONPATH=. uv run python base_smoke_test.py
+
+      - name: Sync with mqtt extra
+        if: matrix.track == 'mqtt'
+        run: uv sync --extra mqtt
+      - name: MQTT ingest smoke
+        if: matrix.track == 'mqtt'
+        run: PYTHONPATH=. uv run python mqtt_smoke_test.py
+
+      - name: Sync with ai extra
+        if: matrix.track == 'ai'
+        run: uv sync --extra ai
+      - name: AI summary smoke
+        if: matrix.track == 'ai'
+        run: PYTHONPATH=. uv run python ai_smoke_test.py
