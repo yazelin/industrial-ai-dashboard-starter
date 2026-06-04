@@ -145,19 +145,19 @@ curl http://127.0.0.1:8000/api/snapshot
 
 > 電量是用三角函數隨時間擺動的，所以你跑的時候 `alerts` 可能是空陣列 `[]`，多刷新幾次（或等幾秒）就會看到電量低於 20 的告警冒出來。
 
-再試 AI summary 佔位 API：
+再試 AI summary（預設規則式班報）：
 
 ```bash
 curl http://127.0.0.1:8000/api/ai-summary
 ```
 
-**真實輸出：**
+**真實輸出（內容隨模擬狀態變動，格式固定）：**
 
 ```json
-{"summary":"3 AGVs online, 2 alerts."}
+{"summary": "AGV 3 台在線；低電量 1 台(AGV-3)；異常機台 0 台；告警 1 則。"}
 ```
 
-這個 summary 目前是一句樣板字串（`app/main.py` 裡組出來的），之後要接真的 LLM 就改這裡。
+這個 summary 預設是**規則式班報**（`app/summary.py` 的 `rule_summary`，確定性）。設 `AI_SUMMARY=llm` 並裝 `ai` extra 就會改走 LLM 生成自然語言班報（見 `docs/08-real-data-and-ai-summary.md`），不用改程式。
 
 ## 步驟 6（選做）：直接看 WebSocket 串流
 
@@ -201,5 +201,5 @@ frame 2: ts=1780342128 agvs=3 alerts=2
 
 - `GET /`：dashboard UI
 - `GET /api/snapshot`：目前 AGV / machines / alerts 快照
-- `GET /api/ai-summary`：AI summary 佔位 API
+- `GET /api/ai-summary`：AI 班報（預設規則式；`AI_SUMMARY=llm` 切換 LLM）
 - `WebSocket /ws`：每秒推送即時快照

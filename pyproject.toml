@@ -7,5 +7,9 @@ dependencies = [
     "uvicorn[standard]==0.34.0",
 ]
 
+[project.optional-dependencies]
+mqtt = ["amqtt>=0.11,<0.12"]
+ai = ["httpx>=0.28,<0.29"]
+
 [tool.uv]
 package = false

@@ -81,8 +81,7 @@ def real_snapshot():
 ## 步驟 2：加入歷史與 AI summary（方向）
 
 - 歷史：在背景任務裡把每次 snapshot 存進記憶體 ring buffer 或時序資料庫，再多開一個 `GET /api/history` 回傳近 N 筆。
-- AI summary：目前 `/api/ai-summary` 回傳的是樣板字串。要接真 LLM，就把 `app/main.py` 的 `summary()` 改成把當前 `alerts` 丟給模型生成一句班報。
-  - 需要你自己的 LLM API key，本文不實跑這段。設好金鑰後，你會看到 `summary` 從固定樣板變成模型寫的句子。
+- AI summary：`/api/ai-summary` 預設回 `rule_summary()`（確定性規則式班報）。設 `AI_SUMMARY=llm` 並裝 `ai` extra 即切換到 `llm_summary()`（OpenAI 相容），不用改程式。詳見 `docs/08-real-data-and-ai-summary.md`。
 
 ---
 

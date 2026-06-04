@@ -2,10 +2,11 @@
 
 ## 可延伸方向
 
-- 接 MQTT：背景 task 訂閱 topic，更新最新狀態 cache。
-- 接 ROS2：把 ROS topic bridge 成 dashboard JSON。
-- 接 PLC：用 adapter 讀取 tag，再轉成 agvs / machines / alerts。
-- 加 AI：把異常告警與歷史摘要交給 LLM 生成班報。
+> 接 MQTT 與 LLM 班報**已內建為後半段對照組**（見 `docs/08-real-data-and-ai-summary.md`）：`SOURCE_BACKEND=mqtt`、`AI_SUMMARY=llm` 即可切換，不用自己重寫。本節列的是再往外延伸的方向。
+
+- 接 ROS2：把 ROS topic bridge 成 dashboard JSON（沿用後半段「換資料源」的做法）。
+- 接 PLC / Modbus：用 adapter 讀取 tag，再轉成 agvs / machines / alerts。
+- hybrid 摘要：把規則式 + LLM 合併排序（規則式當 fallback）。
 
 ## 改造原則
 
