@@ -92,9 +92,10 @@ INFO:     Application startup complete.</code></pre>
     {"level": "warning", "message": "AGV-3 low battery"}
   ]
 }</code></pre>
-<p>電量是隨時間擺動的，所以你跑的時候 alerts 可能是空陣列，多刷新幾次就會看到 low battery 告警冒出來。再試 AI summary 佔位 API：</p>
+<p>電量是隨時間擺動的，所以你跑的時候 alerts 可能是空陣列，多刷新幾次就會看到 low battery 告警冒出來。再試 AI summary（預設規則式班報）：</p>
 <pre><code>curl http://127.0.0.1:8000/api/ai-summary
-{"summary":"3 AGVs online, 2 alerts."}</code></pre>
+{"summary": "AGV 3 台在線；低電量 1 台(AGV-3)；異常機台 0 台；告警 1 則。"}</code></pre>
+<p>這個 summary 預設是規則式班報（確定性，內容隨狀態變動）；設 AI_SUMMARY=llm 並裝 ai extra 即切換到 LLM 班報（見 docs/08），不用改程式。</p>
 <h3>整體 OK 的判斷標準</h3>
 <ul>
 <li>終端機停在 <code>Application startup complete.</code>，沒有 traceback。</li>
@@ -106,7 +107,7 @@ INFO:     Application startup complete.</code></pre>
 <ul>
 <li>GET /：dashboard UI</li>
 <li>GET /api/snapshot：目前 AGV / machines / alerts 快照</li>
-<li>GET /api/ai-summary：AI summary 佔位 API</li>
+<li>GET /api/ai-summary：AI 班報（預設規則式；AI_SUMMARY=llm 切換 LLM）</li>
 <li>WebSocket /ws：每秒推送即時快照</li>
 </ul></section><section><h2>工業 AI Dashboard 入門模板：架構說明</h2>
 <h3>核心檔案</h3>
@@ -155,7 +156,7 @@ def real_snapshot():
 <h3>步驟 2：加入歷史與 AI summary（方向）</h3>
 <ul>
 <li>歷史：背景任務把每次 snapshot 存進 ring buffer 或時序資料庫，再多開 <code>GET /api/history</code>。</li>
-<li>AI summary：目前 <code>/api/ai-summary</code> 回傳樣板字串；要接真 LLM 就改 <code>app/main.py</code> 的 <code>summary()</code>。需要你自己的 LLM key，本文不實跑這段；設好金鑰後你會看到 summary 從固定樣板變成模型寫的句子。</li>
+<li>AI summary：<code>/api/ai-summary</code> 預設回 <code>rule_summary()</code>（確定性規則式班報）；設 <code>AI_SUMMARY=llm</code> 並裝 <code>ai</code> extra 即切換到 <code>llm_summary()</code>（OpenAI 相容），不用改程式。詳見 docs/08。</li>
 </ul>
 <h3>動手練習：新增一台機台 + 一條告警規則（已實跑驗證）</h3>
 <p>目標：在 <code>machines</code> 多一台 <code>CNC-3</code>，並加「溫度 &gt; 80 發 critical 告警」的規則。在 <code>app/data_source.py</code> 的 machines 末端加上：</p>
